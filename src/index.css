@@ -1,0 +1,133 @@
+/* ── Google Fonts ─────────────────────────────────────────────────────────── */
+@import url('https://fonts.googleapis.com/css2?family=Syne:wght@400;500;600;700;800&family=DM+Mono:ital,wght@0,300;0,400;0,500;1,400&display=swap');
+
+/* ── Tabler Icons ─────────────────────────────────────────────────────────── */
+@import url('https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/tabler-icons.min.css');
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* ── Base resets ──────────────────────────────────────────────────────────── */
+@layer base {
+  *, *::before, *::after {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+  }
+
+  html {
+    scroll-behavior: smooth;
+    height: 100%;
+    font-size: 17px;
+  }
+
+  body {
+    font-family: 'Syne', sans-serif;
+    background-color: #0d0d14;
+    color: #e2e2f0;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    height: 100%;
+    overflow: hidden;
+  }
+
+  #root {
+    height: 100%;
+  }
+
+  /* ── Scrollbar ── */
+  ::-webkit-scrollbar        { width: 4px; height: 4px; }
+  ::-webkit-scrollbar-track  { background: transparent; }
+  ::-webkit-scrollbar-thumb  { background: #2a2a4a; border-radius: 99px; }
+  ::-webkit-scrollbar-thumb:hover { background: #3a3a6a; }
+
+  /* ── Inputs ── */
+  input[type="text"],
+  input[type="email"],
+  input[type="password"],
+  input[type="number"],
+  input[type="date"],
+  select,
+  textarea {
+    color-scheme: dark;
+  }
+}
+
+/* ── Global font-size scale overrides ────────────────────────────────────── */
+.text-\[9px\]  { font-size: 11px !important; }
+.text-\[10px\] { font-size: 12px !important; }
+.text-\[11px\] { font-size: 13px !important; }
+.text-xs       { font-size: 13px !important; line-height: 1.5 !important; }
+.text-sm       { font-size: 15px !important; line-height: 1.5 !important; }
+.text-base     { font-size: 17px !important; }
+.text-lg       { font-size: 20px !important; }
+.text-xl       { font-size: 22px !important; }
+.text-2xl      { font-size: 26px !important; }
+
+th, td { font-size: 13px; }
+
+/* ── Layout shell ─────────────────────────────────────────────────────────── */
+@layer components {
+  .app-shell {
+    display: flex;
+    height: 100vh;
+    width: 100vw;
+    overflow: hidden;
+    background: #0d0d14;
+  }
+
+  .app-main {
+    flex: 1;
+    min-width: 0;
+    height: 100%;
+    overflow: hidden;
+    background: #0f0f1a;
+  }
+}
+
+/* ── Font utilities ───────────────────────────────────────────────────────── */
+@layer utilities {
+  .font-syne    { font-family: 'Syne', sans-serif; }
+  .font-mono-dm { font-family: 'DM Mono', monospace; }
+  .font-mono    { font-family: 'DM Mono', monospace; }
+}
+
+/* ── Animations ───────────────────────────────────────────────────────────── */
+@layer utilities {
+  @keyframes fadeUp {
+    from { opacity: 0; transform: translateY(12px); }
+    to   { opacity: 1; transform: translateY(0); }
+  }
+  .fade-up { animation: fadeUp 0.22s ease both; }
+
+  @keyframes pulseSlow {
+    0%, 100% { opacity: 1; }
+    50%       { opacity: 0.65; }
+  }
+  .animate-pulse-slow { animation: pulseSlow 2.4s ease-in-out infinite; }
+
+  @keyframes spin {
+    to { transform: rotate(360deg); }
+  }
+  .animate-spin { animation: spin 0.9s linear infinite; }
+
+  @keyframes shimmer {
+    from { background-position: -200% 0; }
+    to   { background-position:  200% 0; }
+  }
+  .skeleton {
+    background: linear-gradient(90deg, #1a1a2e 25%, #252540 50%, #1a1a2e 75%);
+    background-size: 200% 100%;
+    animation: shimmer 1.5s infinite;
+    border-radius: 6px;
+  }
+}
+
+/* ── Recharts ─────────────────────────────────────────────────────────────── */
+.recharts-tooltip-wrapper { outline: none !important; }
+
+.recharts-cartesian-axis-tick text,
+.recharts-legend-item-text {
+  font-size: 11px !important;
+}
