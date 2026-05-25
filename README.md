@@ -1,4 +1,4 @@
-# StockMaster Pro
+# Inventory Control
 
 A full-featured **Inventory Control System** built as a single-page React application. Designed to simulate real-world stock management workflows — from tracking product levels and recording stock movements to managing purchase orders and generating reports. All data is mock/demo data for portfolio purposes.
 
