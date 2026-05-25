@@ -71,7 +71,7 @@ src/
 
 ```bash
 # Clone the repository
-git clone <your-repo-url>
+git clone https://github.com/Lazytech15/INVENTORYCONTROL.git
 cd sample
 
 # Install dependencies
