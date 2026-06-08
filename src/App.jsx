@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { AppProvider, useApp } from './context/AppContext.jsx'
-import LoginPage from './components/LoginPage.jsx'
+import LandingPage from './components/LandingPage.jsx'
 import Sidebar from './components/Sidebar.jsx'
 import Dashboard from './components/Dashboard.jsx'
 import InventoryPage from './components/InventoryPage.jsx'
@@ -16,8 +16,8 @@ function AppShell() {
   const { user } = state
   const [page, setPage] = useState('dashboard')
 
-  // Not logged in → show login screen
-  if (!user) return <LoginPage />
+  // Not logged in → show landing page (with login modal inside)
+  if (!user) return <LandingPage />
 
   // Page map
   const PAGES = {
