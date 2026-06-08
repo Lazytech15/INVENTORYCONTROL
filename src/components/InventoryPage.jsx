@@ -13,6 +13,13 @@ function genSKU(category) {
   return `${prefix[category] || 'XX'}-${String(Math.floor(Math.random() * 9000) + 1000)}`
 }
 
+function getStatus(p) {
+  if (p.qty === 0) return { label: 'Out of stock', dot: '#6b7280', bg: '#f3f4f6', color: '#374151' }
+  if (p.qty <= p.reorderAt * 0.5) return { label: 'Critical', dot: '#dc2626', bg: '#fef2f2', color: '#991b1b' }
+  if (p.qty <= p.reorderAt) return { label: 'Low stock', dot: '#d97706', bg: '#fffbeb', color: '#92400e' }
+  return { label: 'Healthy', dot: '#16a34a', bg: '#f0fdf4', color: '#166534' }
+}
+
 export default function InventoryPage() {
   const { state, dispatch } = useApp()
   const { products, user } = state
@@ -22,7 +29,7 @@ export default function InventoryPage() {
   const [showModal, setShowModal] = useState(false)
   const [editProduct, setEditProduct] = useState(null)
   const [form, setForm] = useState(EMPTY_FORM)
-  const [adjustModal, setAdjustModal] = useState(null) // product
+  const [adjustModal, setAdjustModal] = useState(null)
   const [adjustDelta, setAdjustDelta] = useState('')
   const [adjustType, setAdjustType] = useState('outbound')
   const [adjustNote, setAdjustNote] = useState('')
@@ -33,7 +40,6 @@ export default function InventoryPage() {
   const canEdit = user?.role === 'admin' || user?.role === 'manager'
   const canDelete = user?.role === 'admin'
 
-  // Barcode scan
   useEffect(() => {
     if (barcodeMode && barcodeInputRef.current) {
       barcodeInputRef.current.focus()
@@ -46,11 +52,11 @@ export default function InventoryPage() {
       if (!code) return
       const found = products.find(p => p.barcode === code || p.sku === code)
       if (found) {
-        setScanResult(`✓ Found: ${found.name} (${found.sku}) — Qty: ${found.qty}`)
+        setScanResult(`Found: ${found.name} (${found.sku}) — Qty: ${found.qty}`)
         setAdjustModal(found)
         setBarcodeMode(false)
       } else {
-        setScanResult(`✗ No product found for: ${code}`)
+        setScanResult(`No product found for: ${code}`)
       }
       e.target.value = ''
     }
@@ -119,13 +125,6 @@ export default function InventoryPage() {
     setAdjustNote('')
   }
 
-  function getStatus(p) {
-    if (p.qty === 0) return { label: 'OUT OF STOCK', bg: '#1a0d2e', color: '#c084fc' }
-    if (p.qty <= p.reorderAt * 0.5) return { label: 'CRITICAL', bg: '#2d0f0f', color: '#f87171' }
-    if (p.qty <= p.reorderAt) return { label: 'LOW STOCK', bg: '#3a1a0d', color: '#fb923c' }
-    return { label: 'HEALTHY', bg: '#0d3320', color: '#4ade80' }
-  }
-
   function exportCSV() {
     const header = ['SKU','Name','Category','Qty','Reorder At','Cost Price','Sale Price','Stock Value','Supplier','Barcode']
     const rows = filtered.map(p => {
@@ -142,75 +141,104 @@ export default function InventoryPage() {
 
   const totalValue = filtered.reduce((s, p) => s + p.qty * p.salePrice, 0)
 
+  const btnBase = {
+    display: 'inline-flex', alignItems: 'center', gap: 6,
+    padding: '7px 12px', borderRadius: 8, fontSize: 13, cursor: 'pointer',
+    border: '1px solid #e5e7eb', background: '#fff', color: '#374151',
+    transition: 'background 0.12s',
+  }
+
   return (
-    <div className="flex flex-col h-full">
+    <div style={{ display: 'flex', flexDirection: 'column', height: '100%', background: '#f8f9fb' }}>
       {/* Header */}
-      <div className="px-6 py-4 flex items-center gap-3 flex-shrink-0" style={{ borderBottom: '1px solid #1e1e30' }}>
-        <div className="flex-1">
-          <h1 className="font-syne font-extrabold text-lg text-white">Inventory</h1>
-          <p className="font-mono text-[10px] mt-0.5" style={{ color: '#5a5a7a' }}>
+      <div style={{ padding: '16px 24px', display: 'flex', alignItems: 'center', gap: 12, flexShrink: 0, background: '#fff', boxShadow: '0 1px 4px rgba(0,0,0,0.04)' }}>
+        <div style={{ flex: 1 }}>
+          <h1 style={{ fontSize: 18, fontWeight: 600, color: '#111827' }}>Inventory</h1>
+          <p style={{ fontFamily: 'JetBrains Mono, monospace', fontSize: 11, color: '#9ca3af', marginTop: 2 }}>
             {filtered.length} products · ₱{totalValue.toLocaleString()} total value
           </p>
         </div>
         <button
           onClick={() => setBarcodeMode(b => !b)}
-          className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium transition-all"
-          style={{ background: barcodeMode ? '#1a4fff' : '#1a1a2e', color: barcodeMode ? '#fff' : '#9090b8', border: '1px solid #2a2a3e' }}
+          style={{ ...btnBase, background: barcodeMode ? '#111827' : '#fff', color: barcodeMode ? '#fff' : '#374151', borderColor: barcodeMode ? '#111827' : '#e5e7eb' }}
         >
-          <i className="ti ti-scan" /> Scan Barcode
+          <i className="ti ti-scan" style={{ fontSize: 15 }} /> Scan barcode
         </button>
-        <button onClick={exportCSV} className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium" style={{ background: '#1a1a2e', color: '#9090b8', border: '1px solid #2a2a3e' }}>
-          <i className="ti ti-table-export" /> CSV
+        <button onClick={exportCSV} style={btnBase}>
+          <i className="ti ti-table-export" style={{ fontSize: 15 }} /> Export CSV
         </button>
         {canEdit && (
-          <button onClick={openAdd} className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold text-white" style={{ background: '#1a4fff' }}>
-            <i className="ti ti-plus" /> Add Product
+          <button
+            onClick={openAdd}
+            style={{ ...btnBase, background: '#2563eb', color: '#fff', borderColor: '#2563eb', boxShadow: '0 2px 8px rgba(37,99,235,0.3)' }}
+          >
+            <i className="ti ti-plus" style={{ fontSize: 15 }} /> Add product
           </button>
         )}
       </div>
 
       {/* Barcode scanner input */}
       {barcodeMode && (
-        <div className="px-6 py-3 flex items-center gap-3" style={{ background: '#111128', borderBottom: '1px solid #2a2a3e' }}>
-          <i className="ti ti-scan" style={{ color: '#1a4fff', fontSize: 18 }} />
+        <div style={{ padding: '10px 24px', display: 'flex', alignItems: 'center', gap: 10, background: '#f9fafb', borderBottom: '1px solid #f3f4f6' }}>
+          <i className="ti ti-scan" style={{ color: '#6b7280', fontSize: 16 }} />
           <input
             ref={barcodeInputRef}
             type="text"
-            placeholder="Scan barcode or type SKU and press Enter..."
+            placeholder="Scan barcode or type SKU and press Enter…"
             onKeyDown={handleBarcodeScan}
-            className="flex-1 bg-transparent outline-none text-sm"
-            style={{ color: '#e2e2f0' }}
+            style={{ flex: 1, background: 'transparent', outline: 'none', fontSize: 13, color: '#111827', border: 'none' }}
           />
           {scanResult && (
-            <span className="text-xs font-mono" style={{ color: scanResult.startsWith('✓') ? '#4ade80' : '#f87171' }}>{scanResult}</span>
+            <span style={{ fontSize: 12, fontFamily: 'JetBrains Mono, monospace', color: scanResult.startsWith('Found') ? '#16a34a' : '#dc2626' }}>{scanResult}</span>
           )}
-          <button onClick={() => { setBarcodeMode(false); setScanResult('') }} className="text-xs" style={{ color: '#5a5a7a' }}>✕</button>
+          <button onClick={() => { setBarcodeMode(false); setScanResult('') }} style={{ color: '#9ca3af', background: 'none', border: 'none', cursor: 'pointer', fontSize: 16 }}>✕</button>
         </div>
       )}
 
+      {/* Stats strip */}
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4,1fr)', flexShrink: 0 }}>
+        {[
+          { label: 'Total SKUs', value: filtered.length, color: '#111827' },
+          { label: 'Total units', value: filtered.reduce((s, p) => s + p.qty, 0).toLocaleString(), color: '#111827' },
+          { label: 'Low stock', value: filtered.filter(p => p.qty <= p.reorderAt && p.qty > 0).length, color: '#d97706' },
+          { label: 'Out of stock', value: filtered.filter(p => p.qty === 0).length, color: '#dc2626' },
+        ].map(s => (
+          <div key={s.label} style={{ padding: '12px 24px', borderRight: '1px solid #f3f4f6' }}>
+            <div style={{ fontSize: 11, color: '#9ca3af', marginBottom: 4 }}>{s.label}</div>
+            <div style={{ fontSize: 20, fontWeight: 600, color: s.color }}>{s.value}</div>
+          </div>
+        ))}
+      </div>
+
       {/* Filters */}
-      <div className="px-6 py-3 flex items-center gap-3 flex-shrink-0" style={{ borderBottom: '1px solid #1e1e30' }}>
-        <div className="relative flex-1 max-w-xs">
-          <i className="ti ti-search absolute left-3 top-1/2 -translate-y-1/2 text-sm" style={{ color: '#5a5a7a' }} />
+      <div style={{ padding: '10px 24px', display: 'flex', alignItems: 'center', gap: 10, flexShrink: 0 }}>
+        <div style={{ position: 'relative' }}>
+          <i className="ti ti-search" style={{ position: 'absolute', left: 10, top: '50%', transform: 'translateY(-50%)', fontSize: 14, color: '#9ca3af' }} />
           <input
             type="text"
-            placeholder="Search name, SKU, barcode..."
+            placeholder="Search name, SKU, barcode…"
             value={search}
             onChange={e => setSearch(e.target.value)}
-            className="w-full pl-8 pr-3 py-1.5 rounded-lg text-xs outline-none"
-            style={{ background: '#1a1a2e', border: '1px solid #2a2a3e', color: '#e2e2f0' }}
+            style={{
+              paddingLeft: 32, paddingRight: 12, paddingTop: 7, paddingBottom: 7,
+              borderRadius: 8, border: '1px solid #e5e7eb',
+              background: '#f9fafb', color: '#111827', fontSize: 13,
+              outline: 'none', width: 220,
+            }}
           />
         </div>
-        <div className="flex gap-1.5">
+        <div style={{ display: 'flex', gap: 4 }}>
           {['All', ...CATEGORIES].map(c => (
             <button
               key={c}
               onClick={() => setCatFilter(c)}
-              className="px-2.5 py-1 rounded-md text-[10px] font-mono font-medium transition-all"
               style={{
-                background: catFilter === c ? '#1a2a5e' : '#1a1a2e',
-                color: catFilter === c ? '#6090ff' : '#5a5a7a',
-                border: `1px solid ${catFilter === c ? '#2a3a7e' : '#2a2a3e'}`,
+                padding: '5px 10px', borderRadius: 999, fontSize: 12,
+                border: catFilter === c ? '1px solid #d1d5db' : '1px solid transparent',
+                background: catFilter === c ? '#fff' : 'transparent',
+                color: catFilter === c ? '#111827' : '#6b7280',
+                fontWeight: catFilter === c ? 500 : 400,
+                cursor: 'pointer', transition: 'all 0.1s',
               }}
             >
               {c}
@@ -220,8 +248,11 @@ export default function InventoryPage() {
         <select
           value={sortBy}
           onChange={e => setSortBy(e.target.value)}
-          className="px-2.5 py-1.5 rounded-lg text-[10px] font-mono outline-none"
-          style={{ background: '#1a1a2e', border: '1px solid #2a2a3e', color: '#9090b8' }}
+          style={{
+            marginLeft: 'auto', padding: '6px 10px', borderRadius: 8,
+            border: '1px solid #e5e7eb', background: '#f9fafb',
+            color: '#6b7280', fontSize: 12, outline: 'none', cursor: 'pointer',
+          }}
         >
           <option value="name">Sort: Name</option>
           <option value="qty">Sort: Qty</option>
@@ -231,54 +262,64 @@ export default function InventoryPage() {
       </div>
 
       {/* Table */}
-      <div className="flex-1 overflow-auto">
-        <table className="w-full">
-          <thead style={{ position: 'sticky', top: 0, background: '#0f0f1a', zIndex: 1 }}>
-            <tr style={{ borderBottom: '1px solid #2a2a3e' }}>
-              {['SKU','PRODUCT','CATEGORY','QTY','REORDER','COST','PRICE','STATUS',''].map(h => (
-                <th key={h} className="text-left px-4 py-2.5 font-mono text-[9px]" style={{ color: '#5a5a7a', letterSpacing: '0.08em', fontWeight: 400, whiteSpace: 'nowrap' }}>{h}</th>
+      <div style={{ flex: 1, overflowY: 'auto', padding: '16px 20px' }}>
+        <div style={{ background: '#fff', border: '1px solid #e5e7eb', borderRadius: 14, overflow: 'hidden', boxShadow: '0 4px 16px rgba(0,0,0,0.06), 0 1px 4px rgba(0,0,0,0.04)' }}>
+        <table style={{ width: '100%', borderCollapse: 'collapse' }}>
+          <thead style={{ position: 'sticky', top: 0, background: '#f9fafb', zIndex: 1 }}>
+            <tr style={{ borderBottom: '1px solid #f3f4f6' }}>
+              {['SKU', 'Product', 'Category', 'Qty', 'Reorder', 'Cost', 'Price', 'Status', ''].map(h => (
+                <th key={h} style={{
+                  textAlign: 'left', padding: '9px 16px',
+                  fontSize: 11, fontWeight: 500, color: '#9ca3af',
+                  letterSpacing: '0.04em', whiteSpace: 'nowrap',
+                }}>{h}</th>
               ))}
             </tr>
           </thead>
           <tbody>
-            {filtered.map(p => {
+            {filtered.map((p, rowIdx) => {
               const st = getStatus(p)
               const sup = SUPPLIERS.find(s => s.id === p.supplierId)
+              const isEven = rowIdx % 2 === 0
               return (
-                <tr key={p.id} className="group" style={{ borderBottom: '1px solid #1a1a28' }}>
-                  <td className="px-4 py-2.5 font-mono text-[10px]" style={{ color: '#6a6a8a' }}>{p.sku}</td>
-                  <td className="px-4 py-2.5">
-                    <div className="text-xs font-medium" style={{ color: '#c0c0e0' }}>{p.name}</div>
-                    {sup && <div className="font-mono text-[9px]" style={{ color: '#3a3a5a' }}>{sup.name}</div>}
+                <tr key={p.id} className="group" style={{ borderBottom: '1px solid #f3f4f6', background: isEven ? '#fff' : '#fafbff' }}
+                  onMouseEnter={e => e.currentTarget.style.background = '#f0f4ff'}
+                  onMouseLeave={e => e.currentTarget.style.background = isEven ? '#fff' : '#fafbff'}
+                >
+                  <td style={{ padding: '10px 16px', fontFamily: 'JetBrains Mono, monospace', fontSize: 12, color: '#9ca3af' }}>{p.sku}</td>
+                  <td style={{ padding: '10px 16px' }}>
+                    <div style={{ fontSize: 13, fontWeight: 500, color: '#111827' }}>{p.name}</div>
+                    {sup && <div style={{ fontFamily: 'JetBrains Mono, monospace', fontSize: 11, color: '#d1d5db', marginTop: 2 }}>{sup.name}</div>}
                   </td>
-                  <td className="px-4 py-2.5 font-mono text-[10px]" style={{ color: '#6a6a8a' }}>{p.category}</td>
-                  <td className="px-4 py-2.5 font-mono text-xs font-bold" style={{ color: p.qty <= p.reorderAt ? '#f87171' : '#e2e2f0' }}>{p.qty}</td>
-                  <td className="px-4 py-2.5 font-mono text-[10px]" style={{ color: '#6a6a8a' }}>{p.reorderAt}</td>
-                  <td className="px-4 py-2.5 font-mono text-[10px]" style={{ color: '#6a6a8a' }}>₱{p.costPrice.toLocaleString()}</td>
-                  <td className="px-4 py-2.5 font-mono text-[10px]" style={{ color: '#9090b8' }}>₱{p.salePrice.toLocaleString()}</td>
-                  <td className="px-4 py-2.5">
-                    <span className="font-mono text-[9px] font-bold px-2 py-0.5 rounded" style={{ background: st.bg, color: st.color }}>{st.label}</span>
+                  <td style={{ padding: '10px 16px' }}>
+                    <span style={{
+                      display: 'inline-block', padding: '2px 8px', borderRadius: 999,
+                      fontSize: 11, background: '#f3f4f6', color: '#6b7280',
+                      border: '1px solid #e5e7eb',
+                    }}>{p.category}</span>
                   </td>
-                  <td className="px-4 py-2.5">
-                    <div className="flex items-center gap-1.5 opacity-0 group-hover:opacity-100 transition-opacity">
-                      <button
-                        onClick={() => { setAdjustModal(p); setAdjustDelta(''); setAdjustNote('') }}
-                        className="p-1.5 rounded-md hover:opacity-80"
-                        style={{ background: '#1a3a2e', color: '#4ade80' }}
-                        title="Adjust stock"
-                      >
-                        <i className="ti ti-arrows-exchange" style={{ fontSize: 12 }} />
-                      </button>
-                      {canEdit && (
-                        <button onClick={() => openEdit(p)} className="p-1.5 rounded-md hover:opacity-80" style={{ background: '#1a2a5e', color: '#6090ff' }} title="Edit">
-                          <i className="ti ti-edit" style={{ fontSize: 12 }} />
-                        </button>
-                      )}
-                      {canDelete && (
-                        <button onClick={() => handleDelete(p.id)} className="p-1.5 rounded-md hover:opacity-80" style={{ background: '#2d0f0f', color: '#f87171' }} title="Delete">
-                          <i className="ti ti-trash" style={{ fontSize: 12 }} />
-                        </button>
-                      )}
+                  <td style={{ padding: '10px 16px', fontFamily: 'JetBrains Mono, monospace', fontSize: 13, fontWeight: 500, color: p.qty <= p.reorderAt ? '#dc2626' : '#111827' }}>{p.qty}</td>
+                  <td style={{ padding: '10px 16px', fontFamily: 'JetBrains Mono, monospace', fontSize: 12, color: '#9ca3af' }}>{p.reorderAt}</td>
+                  <td style={{ padding: '10px 16px', fontFamily: 'JetBrains Mono, monospace', fontSize: 12, color: '#9ca3af' }}>₱{p.costPrice.toLocaleString()}</td>
+                  <td style={{ padding: '10px 16px', fontFamily: 'JetBrains Mono, monospace', fontSize: 12, color: '#6b7280' }}>₱{p.salePrice.toLocaleString()}</td>
+                  <td style={{ padding: '10px 16px' }}>
+                    <span style={{
+                      display: 'inline-flex', alignItems: 'center', gap: 5,
+                      padding: '3px 8px', borderRadius: 999, fontSize: 11, fontWeight: 500,
+                      background: st.bg, color: st.color,
+                    }}>
+                      <span style={{ width: 5, height: 5, borderRadius: '50%', background: st.dot, flexShrink: 0 }} />
+                      {st.label}
+                    </span>
+                  </td>
+                  <td style={{ padding: '10px 16px' }}>
+                    <div style={{ display: 'flex', gap: 4, opacity: 0, transition: 'opacity 0.12s' }}
+                      className="row-actions"
+                    >
+                      <ActionBtn icon="ti-arrows-exchange" title="Adjust stock" bg="#f0fdf4" color="#16a34a"
+                        onClick={() => { setAdjustModal(p); setAdjustDelta(''); setAdjustNote('') }} />
+                      {canEdit && <ActionBtn icon="ti-edit" title="Edit" bg="#eff6ff" color="#1d4ed8" onClick={() => openEdit(p)} />}
+                      {canDelete && <ActionBtn icon="ti-trash" title="Delete" bg="#fef2f2" color="#dc2626" onClick={() => handleDelete(p.id)} />}
                     </div>
                   </td>
                 </tr>
@@ -286,140 +327,175 @@ export default function InventoryPage() {
             })}
           </tbody>
         </table>
+
         {filtered.length === 0 && (
-          <div className="flex flex-col items-center justify-center py-16" style={{ color: '#3a3a5a' }}>
-            <i className="ti ti-package-off" style={{ fontSize: 40 }} />
-            <p className="font-mono text-xs mt-3">No products found</p>
+          <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: '4rem', color: '#d1d5db' }}>
+            <i className="ti ti-package-off" style={{ fontSize: 40, marginBottom: 12 }} />
+            <p style={{ fontFamily: 'JetBrains Mono, monospace', fontSize: 12 }}>No products found</p>
           </div>
         )}
+        </div>
       </div>
+
+      {/* Style for row-actions hover */}
+      <style>{`tr:hover .row-actions { opacity: 1 !important; }`}</style>
 
       {/* Add/Edit Modal */}
       {showModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center" style={{ background: 'rgba(0,0,0,0.7)' }}>
-          <div className="rounded-2xl border w-full max-w-lg p-6 fade-up" style={{ background: '#13131f', borderColor: '#2a2a3e', maxHeight: '90vh', overflowY: 'auto' }}>
-            <div className="flex items-center justify-between mb-5">
-              <h2 className="font-syne font-bold text-lg text-white">{editProduct ? 'Edit Product' : 'Add Product'}</h2>
-              <button onClick={() => setShowModal(false)} style={{ color: '#5a5a7a' }}><i className="ti ti-x" /></button>
+        <Modal onClose={() => setShowModal(false)} title={editProduct ? 'Edit product' : 'Add product'}>
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
+            {[
+              { label: 'SKU', field: 'sku', type: 'text' },
+              { label: 'Barcode', field: 'barcode', type: 'text' },
+            ].map(f => (
+              <Field key={f.field} label={f.label} value={form[f.field]} onChange={v => handleFormChange(f.field, v)} type={f.type} />
+            ))}
+            <div style={{ gridColumn: 'span 2' }}>
+              <Field label="Product name" value={form.name} onChange={v => handleFormChange('name', v)} type="text" />
             </div>
-            <div className="grid grid-cols-2 gap-3">
-              {[
-                { label: 'SKU', field: 'sku', type: 'text' },
-                { label: 'Barcode', field: 'barcode', type: 'text' },
-              ].map(f => (
-                <Field key={f.field} label={f.label} value={form[f.field]} onChange={v => handleFormChange(f.field, v)} type={f.type} />
-              ))}
-              <div className="col-span-2">
-                <Field label="Product Name" value={form.name} onChange={v => handleFormChange('name', v)} type="text" />
-              </div>
-              <div>
-                <label className="block font-mono text-[10px] mb-1.5" style={{ color: '#5a5a7a', letterSpacing: '0.08em' }}>CATEGORY</label>
-                <select
-                  value={form.category}
-                  onChange={e => handleFormChange('category', e.target.value)}
-                  className="w-full rounded-lg px-3 py-2 text-xs outline-none"
-                  style={{ background: '#1a1a2e', border: '1px solid #2a2a3e', color: '#e2e2f0' }}
-                >
-                  {CATEGORIES.map(c => <option key={c}>{c}</option>)}
-                </select>
-              </div>
-              <div>
-                <label className="block font-mono text-[10px] mb-1.5" style={{ color: '#5a5a7a', letterSpacing: '0.08em' }}>SUPPLIER</label>
-                <select
-                  value={form.supplierId}
-                  onChange={e => handleFormChange('supplierId', e.target.value)}
-                  className="w-full rounded-lg px-3 py-2 text-xs outline-none"
-                  style={{ background: '#1a1a2e', border: '1px solid #2a2a3e', color: '#e2e2f0' }}
-                >
-                  <option value="">— Select —</option>
-                  {SUPPLIERS.map(s => <option key={s.id} value={s.id}>{s.name}</option>)}
-                </select>
-              </div>
-              {[
-                { label: 'Initial Qty', field: 'qty', type: 'number' },
-                { label: 'Reorder Point', field: 'reorderAt', type: 'number' },
-                { label: 'Cost Price (₱)', field: 'costPrice', type: 'number' },
-                { label: 'Sale Price (₱)', field: 'salePrice', type: 'number' },
-              ].map(f => (
-                <Field key={f.field} label={f.label} value={form[f.field]} onChange={v => handleFormChange(f.field, v)} type={f.type} />
-              ))}
-              <div className="col-span-2">
-                <label className="block font-mono text-[10px] mb-1.5" style={{ color: '#5a5a7a', letterSpacing: '0.08em' }}>DESCRIPTION</label>
-                <textarea
-                  value={form.description}
-                  onChange={e => handleFormChange('description', e.target.value)}
-                  rows={2}
-                  className="w-full rounded-lg px-3 py-2 text-xs outline-none resize-none"
-                  style={{ background: '#1a1a2e', border: '1px solid #2a2a3e', color: '#e2e2f0' }}
-                />
-              </div>
+            <div>
+              <label style={labelStyle}>Category</label>
+              <select value={form.category} onChange={e => handleFormChange('category', e.target.value)} style={inputStyle}>
+                {CATEGORIES.map(c => <option key={c}>{c}</option>)}
+              </select>
             </div>
-            <div className="flex justify-end gap-2 mt-5">
-              <button onClick={() => setShowModal(false)} className="px-4 py-2 rounded-lg text-xs" style={{ background: '#1a1a2e', color: '#9090b8', border: '1px solid #2a2a3e' }}>Cancel</button>
-              <button onClick={handleSave} className="px-4 py-2 rounded-lg text-xs font-semibold text-white" style={{ background: '#1a4fff' }}>
-                {editProduct ? 'Save Changes' : 'Add Product'}
-              </button>
+            <div>
+              <label style={labelStyle}>Supplier</label>
+              <select value={form.supplierId} onChange={e => handleFormChange('supplierId', e.target.value)} style={inputStyle}>
+                <option value="">— Select —</option>
+                {SUPPLIERS.map(s => <option key={s.id} value={s.id}>{s.name}</option>)}
+              </select>
+            </div>
+            {[
+              { label: 'Initial qty', field: 'qty', type: 'number' },
+              { label: 'Reorder point', field: 'reorderAt', type: 'number' },
+              { label: 'Cost price (₱)', field: 'costPrice', type: 'number' },
+              { label: 'Sale price (₱)', field: 'salePrice', type: 'number' },
+            ].map(f => (
+              <Field key={f.field} label={f.label} value={form[f.field]} onChange={v => handleFormChange(f.field, v)} type={f.type} />
+            ))}
+            <div style={{ gridColumn: 'span 2' }}>
+              <label style={labelStyle}>Description</label>
+              <textarea
+                value={form.description}
+                onChange={e => handleFormChange('description', e.target.value)}
+                rows={2}
+                style={{ ...inputStyle, resize: 'none' }}
+              />
             </div>
           </div>
-        </div>
+          <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 8, marginTop: 20 }}>
+            <button onClick={() => setShowModal(false)} style={{ padding: '8px 16px', borderRadius: 8, border: '1px solid #e5e7eb', background: '#fff', color: '#6b7280', cursor: 'pointer', fontSize: 13 }}>Cancel</button>
+            <button onClick={handleSave} style={{ padding: '8px 16px', borderRadius: 8, border: 'none', background: '#2563eb', color: '#fff', cursor: 'pointer', fontSize: 13, fontWeight: 500, boxShadow: '0 2px 8px rgba(37,99,235,0.3)' }}>
+              {editProduct ? 'Save changes' : 'Add product'}
+            </button>
+          </div>
+        </Modal>
       )}
 
       {/* Adjust Stock Modal */}
       {adjustModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center" style={{ background: 'rgba(0,0,0,0.7)' }}>
-          <div className="rounded-2xl border w-full max-w-sm p-6 fade-up" style={{ background: '#13131f', borderColor: '#2a2a3e' }}>
-            <div className="flex items-center justify-between mb-5">
-              <h2 className="font-syne font-bold text-lg text-white">Adjust Stock</h2>
-              <button onClick={() => setAdjustModal(null)} style={{ color: '#5a5a7a' }}><i className="ti ti-x" /></button>
-            </div>
-            <div className="rounded-lg p-3 mb-4" style={{ background: '#1a1a2e', border: '1px solid #2a2a3e' }}>
-              <div className="text-xs font-semibold" style={{ color: '#c0c0e0' }}>{adjustModal.name}</div>
-              <div className="font-mono text-[10px] mt-0.5" style={{ color: '#5a5a7a' }}>{adjustModal.sku} · Current: {adjustModal.qty} units</div>
-            </div>
-            <div className="space-y-3">
-              <div className="flex gap-2">
-                {['inbound','outbound'].map(t => (
-                  <button
-                    key={t}
-                    onClick={() => setAdjustType(t)}
-                    className="flex-1 py-2 rounded-lg text-xs font-semibold transition-all"
-                    style={{
-                      background: adjustType === t ? (t === 'inbound' ? '#0d3320' : '#3a1a0d') : '#1a1a2e',
-                      color: adjustType === t ? (t === 'inbound' ? '#4ade80' : '#fb923c') : '#5a5a7a',
-                      border: `1px solid ${adjustType === t ? (t === 'inbound' ? '#1a4a30' : '#5a2a0d') : '#2a2a3e'}`,
-                    }}
-                  >
-                    <i className={`ti ${t === 'inbound' ? 'ti-arrow-down' : 'ti-arrow-up'} mr-1`} />
-                    {t.charAt(0).toUpperCase() + t.slice(1)}
-                  </button>
-                ))}
-              </div>
-              <Field label="Quantity" value={adjustDelta} onChange={setAdjustDelta} type="number" placeholder="Enter units..." />
-              <Field label="Note (optional)" value={adjustNote} onChange={setAdjustNote} type="text" placeholder="e.g. Sale, Restock, Damage..." />
-            </div>
-            <div className="flex justify-end gap-2 mt-5">
-              <button onClick={() => setAdjustModal(null)} className="px-4 py-2 rounded-lg text-xs" style={{ background: '#1a1a2e', color: '#9090b8', border: '1px solid #2a2a3e' }}>Cancel</button>
-              <button onClick={handleAdjust} className="px-4 py-2 rounded-lg text-xs font-semibold text-white" style={{ background: '#1a4fff' }}>Confirm</button>
-            </div>
+        <Modal onClose={() => setAdjustModal(null)} title="Adjust stock">
+          <div style={{ background: '#f9fafb', border: '1px solid #f3f4f6', borderRadius: 8, padding: '12px 14px', marginBottom: 16 }}>
+            <div style={{ fontSize: 13, fontWeight: 500, color: '#111827' }}>{adjustModal.name}</div>
+            <div style={{ fontFamily: 'JetBrains Mono, monospace', fontSize: 11, color: '#9ca3af', marginTop: 2 }}>{adjustModal.sku} · Current: {adjustModal.qty} units</div>
           </div>
-        </div>
+          <div style={{ display: 'flex', gap: 8, marginBottom: 12 }}>
+            {['inbound', 'outbound'].map(t => (
+              <button
+                key={t}
+                onClick={() => setAdjustType(t)}
+                style={{
+                  flex: 1, padding: '9px 0', borderRadius: 8, fontSize: 13, fontWeight: 500,
+                  cursor: 'pointer', transition: 'all 0.1s',
+                  background: adjustType === t ? (t === 'inbound' ? '#f0fdf4' : '#fef2f2') : '#f9fafb',
+                  color: adjustType === t ? (t === 'inbound' ? '#16a34a' : '#dc2626') : '#9ca3af',
+                  border: `1px solid ${adjustType === t ? (t === 'inbound' ? '#bbf7d0' : '#fecaca') : '#e5e7eb'}`,
+                }}
+              >
+                <i className={`ti ${t === 'inbound' ? 'ti-arrow-down' : 'ti-arrow-up'}`} style={{ marginRight: 6 }} />
+                {t.charAt(0).toUpperCase() + t.slice(1)}
+              </button>
+            ))}
+          </div>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+            <Field label="Quantity" value={adjustDelta} onChange={setAdjustDelta} type="number" placeholder="Enter units…" />
+            <Field label="Note (optional)" value={adjustNote} onChange={setAdjustNote} type="text" placeholder="e.g. Sale, Restock, Damage…" />
+          </div>
+          <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 8, marginTop: 20 }}>
+            <button onClick={() => setAdjustModal(null)} style={{ padding: '8px 16px', borderRadius: 8, border: '1px solid #e5e7eb', background: '#fff', color: '#6b7280', cursor: 'pointer', fontSize: 13 }}>Cancel</button>
+            <button onClick={handleAdjust} style={{ padding: '8px 16px', borderRadius: 8, border: 'none', background: '#2563eb', color: '#fff', cursor: 'pointer', fontSize: 13, fontWeight: 500, boxShadow: '0 2px 8px rgba(37,99,235,0.3)' }}>Confirm</button>
+          </div>
+        </Modal>
       )}
     </div>
   )
 }
 
+const labelStyle = {
+  display: 'block', fontSize: 12, fontWeight: 500,
+  color: '#374151', marginBottom: 6,
+}
+
+const inputStyle = {
+  width: '100%', borderRadius: 8, border: '1px solid #e5e7eb',
+  background: '#f9fafb', color: '#111827', fontSize: 13,
+  padding: '8px 10px', outline: 'none',
+}
+
 function Field({ label, value, onChange, type = 'text', placeholder = '' }) {
   return (
     <div>
-      <label className="block font-mono text-[10px] mb-1.5" style={{ color: '#5a5a7a', letterSpacing: '0.08em' }}>{label.toUpperCase()}</label>
+      <label style={labelStyle}>{label}</label>
       <input
         type={type}
         value={value}
         onChange={e => onChange(e.target.value)}
         placeholder={placeholder}
-        className="w-full rounded-lg px-3 py-2 text-xs outline-none"
-        style={{ background: '#1a1a2e', border: '1px solid #2a2a3e', color: '#e2e2f0' }}
+        style={inputStyle}
       />
+    </div>
+  )
+}
+
+function ActionBtn({ icon, title, bg, color, onClick }) {
+  return (
+    <button
+      onClick={onClick}
+      title={title}
+      style={{
+        width: 28, height: 28, borderRadius: 6,
+        background: bg, color, border: 'none',
+        cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center',
+        transition: 'opacity 0.1s',
+      }}
+      onMouseEnter={e => e.currentTarget.style.opacity = '0.75'}
+      onMouseLeave={e => e.currentTarget.style.opacity = '1'}
+    >
+      <i className={`ti ${icon}`} style={{ fontSize: 13 }} />
+    </button>
+  )
+}
+
+function Modal({ children, onClose, title }) {
+  return (
+    <div style={{
+      position: 'fixed', inset: 0, zIndex: 50,
+      display: 'flex', alignItems: 'center', justifyContent: 'center',
+      background: 'rgba(0,0,0,0.4)', backdropFilter: 'blur(2px)',
+    }}>
+      <div className="fade-up" style={{
+        background: '#fff', borderRadius: 16, border: '1px solid #e5e7eb',
+        width: '100%', maxWidth: 480, padding: '24px',
+        maxHeight: '90vh', overflowY: 'auto',
+        boxShadow: '0 20px 60px rgba(0,0,0,0.15), 0 4px 16px rgba(0,0,0,0.08)',
+      }}>
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 20 }}>
+          <h2 style={{ fontSize: 16, fontWeight: 700, color: '#111827' }}>{title}</h2>
+          <button onClick={onClose} style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#9ca3af', fontSize: 18, lineHeight: 1 }}>✕</button>
+        </div>
+        {children}
+      </div>
     </div>
   )
 }

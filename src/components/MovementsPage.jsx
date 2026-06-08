@@ -3,7 +3,7 @@ import { useApp } from '../context/AppContext.jsx'
 
 export default function MovementsPage() {
   const { state } = useApp()
-  const { movements, products } = state
+  const { movements } = state
   const [search, setSearch] = useState('')
   const [typeFilter, setTypeFilter] = useState('all')
   const [dateFrom, setDateFrom] = useState('')
@@ -33,99 +33,125 @@ export default function MovementsPage() {
     URL.revokeObjectURL(url)
   }
 
+  const hasFilters = search || typeFilter !== 'all' || dateFrom || dateTo
+
+  const inputStyle = {
+    padding: '7px 10px', borderRadius: 8, border: '1px solid #e5e7eb',
+    background: '#f9fafb', color: '#111827', fontSize: 13, outline: 'none',
+  }
+
   return (
-    <div className="flex flex-col h-full">
-      <div className="px-6 py-4 flex items-center gap-3 flex-shrink-0" style={{ borderBottom: '1px solid #1e1e30' }}>
-        <div className="flex-1">
-          <h1 className="font-syne font-extrabold text-lg text-white">Stock Movements</h1>
-          <p className="font-mono text-[10px] mt-0.5" style={{ color: '#5a5a7a' }}>
-            {filtered.length} records · ↓{totalIn} in · ↑{totalOut} out
+    <div style={{ display: 'flex', flexDirection: 'column', height: '100%' }}>
+      {/* Header */}
+      <div style={{ padding: '16px 24px', display: 'flex', alignItems: 'center', gap: 12, borderBottom: '1px solid #f3f4f6', flexShrink: 0 }}>
+        <div style={{ flex: 1 }}>
+          <h1 style={{ fontSize: 18, fontWeight: 600, color: '#111827' }}>Stock Movements</h1>
+          <p style={{ fontFamily: 'JetBrains Mono, monospace', fontSize: 11, color: '#9ca3af', marginTop: 2 }}>
+            {filtered.length} records · ↓ {totalIn} in · ↑ {totalOut} out
           </p>
         </div>
-        <button onClick={exportCSV} className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium" style={{ background: '#1a1a2e', color: '#9090b8', border: '1px solid #2a2a3e' }}>
-          <i className="ti ti-table-export" /> CSV
+        <button
+          onClick={exportCSV}
+          style={{ display: 'inline-flex', alignItems: 'center', gap: 6, padding: '7px 12px', borderRadius: 8, border: '1px solid #e5e7eb', background: '#fff', color: '#374151', fontSize: 13, cursor: 'pointer' }}
+        >
+          <i className="ti ti-table-export" style={{ fontSize: 15 }} /> Export CSV
         </button>
       </div>
 
       {/* Filters */}
-      <div className="px-6 py-3 flex items-center gap-3 flex-wrap flex-shrink-0" style={{ borderBottom: '1px solid #1e1e30' }}>
-        <div className="relative">
-          <i className="ti ti-search absolute left-2.5 top-1/2 -translate-y-1/2 text-xs" style={{ color: '#5a5a7a' }} />
+      <div style={{ padding: '10px 24px', display: 'flex', alignItems: 'center', gap: 10, flexWrap: 'wrap', borderBottom: '1px solid #f3f4f6', flexShrink: 0 }}>
+        <div style={{ position: 'relative' }}>
+          <i className="ti ti-search" style={{ position: 'absolute', left: 10, top: '50%', transform: 'translateY(-50%)', fontSize: 14, color: '#9ca3af' }} />
           <input
             type="text"
-            placeholder="Search..."
+            placeholder="Search…"
             value={search}
             onChange={e => setSearch(e.target.value)}
-            className="pl-7 pr-3 py-1.5 rounded-lg text-xs outline-none w-52"
-            style={{ background: '#1a1a2e', border: '1px solid #2a2a3e', color: '#e2e2f0' }}
+            style={{ ...inputStyle, paddingLeft: 32, width: 200 }}
           />
         </div>
-        <div className="flex gap-1.5">
-          {['all','inbound','outbound'].map(t => (
+
+        <div style={{ display: 'flex', gap: 4 }}>
+          {[
+            { val: 'all', label: 'All' },
+            { val: 'inbound', label: 'Inbound' },
+            { val: 'outbound', label: 'Outbound' },
+          ].map(t => (
             <button
-              key={t}
-              onClick={() => setTypeFilter(t)}
-              className="px-3 py-1.5 rounded-lg text-[10px] font-mono font-medium transition-all"
+              key={t.val}
+              onClick={() => setTypeFilter(t.val)}
               style={{
-                background: typeFilter === t ? (t === 'inbound' ? '#0d3320' : t === 'outbound' ? '#3a1a0d' : '#1a2a5e') : '#1a1a2e',
-                color: typeFilter === t ? (t === 'inbound' ? '#4ade80' : t === 'outbound' ? '#fb923c' : '#6090ff') : '#5a5a7a',
-                border: '1px solid #2a2a3e',
+                padding: '6px 12px', borderRadius: 8, fontSize: 12, cursor: 'pointer',
+                border: typeFilter === t.val ? '1px solid #d1d5db' : '1px solid transparent',
+                background: typeFilter === t.val ? '#fff' : 'transparent',
+                color: typeFilter === t.val
+                  ? (t.val === 'inbound' ? '#16a34a' : t.val === 'outbound' ? '#d97706' : '#111827')
+                  : '#6b7280',
+                fontWeight: typeFilter === t.val ? 500 : 400,
               }}
             >
-              {t.toUpperCase()}
+              {t.label}
             </button>
           ))}
         </div>
-        <input type="date" value={dateFrom} onChange={e => setDateFrom(e.target.value)} className="px-2.5 py-1.5 rounded-lg text-xs outline-none" style={{ background: '#1a1a2e', border: '1px solid #2a2a3e', color: '#9090b8' }} />
-        <span className="text-xs" style={{ color: '#3a3a5a' }}>to</span>
-        <input type="date" value={dateTo} onChange={e => setDateTo(e.target.value)} className="px-2.5 py-1.5 rounded-lg text-xs outline-none" style={{ background: '#1a1a2e', border: '1px solid #2a2a3e', color: '#9090b8' }} />
-        {(dateFrom || dateTo || search || typeFilter !== 'all') && (
-          <button onClick={() => { setSearch(''); setTypeFilter('all'); setDateFrom(''); setDateTo('') }} className="text-xs px-2.5 py-1.5 rounded-lg" style={{ background: '#2d0f0f', color: '#f87171', border: '1px solid #4a1a1a' }}>
+
+        <input type="date" value={dateFrom} onChange={e => setDateFrom(e.target.value)} style={{ ...inputStyle, fontSize: 12 }} />
+        <span style={{ fontSize: 12, color: '#9ca3af' }}>to</span>
+        <input type="date" value={dateTo} onChange={e => setDateTo(e.target.value)} style={{ ...inputStyle, fontSize: 12 }} />
+
+        {hasFilters && (
+          <button
+            onClick={() => { setSearch(''); setTypeFilter('all'); setDateFrom(''); setDateTo('') }}
+            style={{ padding: '6px 12px', borderRadius: 8, fontSize: 12, background: '#fef2f2', color: '#dc2626', border: '1px solid #fecaca', cursor: 'pointer' }}
+          >
             Clear filters
           </button>
         )}
       </div>
 
       {/* Table */}
-      <div className="flex-1 overflow-auto">
-        <table className="w-full">
-          <thead style={{ position: 'sticky', top: 0, background: '#0f0f1a', zIndex: 1 }}>
-            <tr style={{ borderBottom: '1px solid #2a2a3e' }}>
-              {['DATE','SKU','PRODUCT','TYPE','QTY','NOTE'].map(h => (
-                <th key={h} className="text-left px-4 py-2.5 font-mono text-[9px]" style={{ color: '#5a5a7a', letterSpacing: '0.08em', fontWeight: 400 }}>{h}</th>
+      <div style={{ flex: 1, overflowY: 'auto' }}>
+        <table style={{ width: '100%', borderCollapse: 'collapse' }}>
+          <thead style={{ position: 'sticky', top: 0, background: '#f9fafb', zIndex: 1 }}>
+            <tr style={{ borderBottom: '1px solid #f3f4f6' }}>
+              {['Date', 'SKU', 'Product', 'Type', 'Qty', 'Note'].map(h => (
+                <th key={h} style={{ textAlign: 'left', padding: '9px 16px', fontSize: 11, fontWeight: 500, color: '#9ca3af' }}>{h}</th>
               ))}
             </tr>
           </thead>
           <tbody>
             {filtered.map(m => (
-              <tr key={m.id} style={{ borderBottom: '1px solid #1a1a28' }}>
-                <td className="px-4 py-2.5 font-mono text-[10px]" style={{ color: '#6a6a8a' }}>{m.date}</td>
-                <td className="px-4 py-2.5 font-mono text-[10px]" style={{ color: '#6a6a8a' }}>{m.sku}</td>
-                <td className="px-4 py-2.5 text-xs" style={{ color: '#c0c0e0' }}>{m.productName}</td>
-                <td className="px-4 py-2.5">
-                  <span
-                    className="inline-flex items-center gap-1 font-mono text-[10px] px-2 py-0.5 rounded"
-                    style={{
-                      background: m.type === 'inbound' ? '#0d3320' : '#3a1a0d',
-                      color: m.type === 'inbound' ? '#4ade80' : '#fb923c',
-                    }}
-                  >
-                    <i className={`ti ${m.type === 'inbound' ? 'ti-arrow-down' : 'ti-arrow-up'}`} style={{ fontSize: 10 }} />
+              <tr key={m.id} style={{ borderBottom: '1px solid #f9fafb' }}
+                onMouseEnter={e => e.currentTarget.style.background = '#fafafa'}
+                onMouseLeave={e => e.currentTarget.style.background = 'transparent'}
+              >
+                <td style={{ padding: '10px 16px', fontFamily: 'JetBrains Mono, monospace', fontSize: 11, color: '#9ca3af' }}>{m.date}</td>
+                <td style={{ padding: '10px 16px', fontFamily: 'JetBrains Mono, monospace', fontSize: 11, color: '#9ca3af' }}>{m.sku}</td>
+                <td style={{ padding: '10px 16px', fontSize: 13, color: '#111827' }}>{m.productName}</td>
+                <td style={{ padding: '10px 16px' }}>
+                  <span style={{
+                    display: 'inline-flex', alignItems: 'center', gap: 5,
+                    fontFamily: 'JetBrains Mono, monospace', fontSize: 11, fontWeight: 500,
+                    padding: '3px 8px', borderRadius: 999,
+                    background: m.type === 'inbound' ? '#f0fdf4' : '#fffbeb',
+                    color: m.type === 'inbound' ? '#16a34a' : '#d97706',
+                  }}>
+                    <i className={`ti ${m.type === 'inbound' ? 'ti-arrow-down' : 'ti-arrow-up'}`} style={{ fontSize: 11 }} />
                     {m.type}
                   </span>
                 </td>
-                <td className="px-4 py-2.5 font-mono text-xs font-bold" style={{ color: m.type === 'inbound' ? '#4ade80' : '#fb923c' }}>
+                <td style={{ padding: '10px 16px', fontFamily: 'JetBrains Mono, monospace', fontSize: 13, fontWeight: 500, color: m.type === 'inbound' ? '#16a34a' : '#d97706' }}>
                   {m.type === 'inbound' ? '+' : '-'}{m.qty}
                 </td>
-                <td className="px-4 py-2.5 text-xs" style={{ color: '#5a5a7a' }}>{m.note || '—'}</td>
+                <td style={{ padding: '10px 16px', fontSize: 12, color: '#9ca3af' }}>{m.note || '—'}</td>
               </tr>
             ))}
           </tbody>
         </table>
         {filtered.length === 0 && (
-          <div className="flex flex-col items-center justify-center py-16" style={{ color: '#3a3a5a' }}>
-            <i className="ti ti-arrows-exchange" style={{ fontSize: 40 }} />
-            <p className="font-mono text-xs mt-3">No movements found</p>
+          <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: '4rem', color: '#d1d5db' }}>
+            <i className="ti ti-arrows-exchange" style={{ fontSize: 40, marginBottom: 12 }} />
+            <p style={{ fontFamily: 'JetBrains Mono, monospace', fontSize: 12 }}>No movements found</p>
           </div>
         )}
       </div>

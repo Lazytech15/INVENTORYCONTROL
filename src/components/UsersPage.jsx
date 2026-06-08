@@ -1,9 +1,9 @@
 import { useApp } from '../context/AppContext.jsx'
 
 const ROLE_STYLES = {
-  admin:   { bg: '#1a2a5e', color: '#6090ff', label: 'Admin' },
-  manager: { bg: '#0d2a1a', color: '#4ade80', label: 'Manager' },
-  staff:   { bg: '#2a2a0d', color: '#f8c94e', label: 'Staff' },
+  admin:   { bg: '#eff6ff', color: '#1d4ed8', border: '#bfdbfe', label: 'Admin' },
+  manager: { bg: '#f0fdf4', color: '#15803d', border: '#bbf7d0', label: 'Manager' },
+  staff:   { bg: '#fffbeb', color: '#b45309', border: '#fde68a', label: 'Staff' },
 }
 
 const PERMISSIONS = {
@@ -12,121 +12,105 @@ const PERMISSIONS = {
   staff:   ['View Dashboard', 'View Inventory', 'Stock Adjustments', 'View Alerts'],
 }
 
+const ALL_PERMISSIONS = ['View Dashboard', 'Manage Inventory', 'Stock Adjustments', 'Purchase Orders', 'Reports', 'Manage Users', 'Delete Products']
+
 export default function UsersPage() {
   const { USERS, state } = useApp()
   const { user: currentUser } = state
 
   return (
-    <div className="flex flex-col h-full">
-      <div className="px-6 py-4 flex-shrink-0" style={{ borderBottom: '1px solid #1e1e30' }}>
-        <h1 className="font-syne font-extrabold text-lg text-white">Users & Roles</h1>
-        <p className="font-mono text-[10px] mt-0.5" style={{ color: '#5a5a7a' }}>{USERS.length} system users</p>
+    <div style={{ display: 'flex', flexDirection: 'column', height: '100%', background: '#f8f9fb' }}>
+      <div style={{ padding: '16px 24px', flexShrink: 0, background: '#fff', boxShadow: '0 1px 4px rgba(0,0,0,0.04)' }}>
+        <h1 style={{ fontSize: 18, fontWeight: 700, color: '#111827' }}>Users & Roles</h1>
+        <p style={{ fontFamily: 'JetBrains Mono, monospace', fontSize: 11, color: '#9ca3af', marginTop: 2 }}>{USERS.length} system users</p>
       </div>
 
-      <div className="flex-1 overflow-auto p-6 space-y-4">
-        {USERS.map(u => {
+      <div style={{ flex: 1, overflowY: 'auto', padding: '20px', display: 'flex', flexDirection: 'column', gap: 12 }}>
+        {USERS.map((u, idx) => {
           const rs = ROLE_STYLES[u.role]
           const perms = PERMISSIONS[u.role]
           const isCurrent = u.id === currentUser?.id
+          const isEven = idx % 2 === 0
 
           return (
             <div
               key={u.id}
-              className="rounded-xl border p-5"
               style={{
-                background: isCurrent ? '#13131f' : '#13131f',
-                borderColor: isCurrent ? '#2a3a7e' : '#2a2a3e',
+                background: isEven ? '#ffffff' : '#fafbff',
+                border: `1px solid ${isCurrent ? '#bfdbfe' : '#e5e7eb'}`,
+                borderRadius: 14, padding: '20px',
+                boxShadow: isEven
+                  ? '0 4px 16px rgba(0,0,0,0.06), 0 1px 4px rgba(0,0,0,0.04)'
+                  : '0 6px 24px rgba(99,102,241,0.07), 0 2px 8px rgba(0,0,0,0.05)',
+                transition: 'box-shadow 0.2s, transform 0.2s',
+              }}
+              onMouseEnter={e => {
+                e.currentTarget.style.boxShadow = '0 8px 32px rgba(0,0,0,0.1), 0 2px 8px rgba(0,0,0,0.06)'
+                e.currentTarget.style.transform = 'translateY(-1px)'
+              }}
+              onMouseLeave={e => {
+                e.currentTarget.style.boxShadow = isEven
+                  ? '0 4px 16px rgba(0,0,0,0.06), 0 1px 4px rgba(0,0,0,0.04)'
+                  : '0 6px 24px rgba(99,102,241,0.07), 0 2px 8px rgba(0,0,0,0.05)'
+                e.currentTarget.style.transform = 'translateY(0)'
               }}
             >
-              <div className="flex items-start justify-between mb-4">
-                <div className="flex items-center gap-3">
-                  <div
-                    className="w-11 h-11 rounded-xl flex items-center justify-center font-bold text-sm flex-shrink-0"
-                    style={{ background: rs.bg, color: rs.color }}
-                  >
+              <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', marginBottom: 16 }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+                  <div style={{
+                    width: 42, height: 42, borderRadius: 10, flexShrink: 0,
+                    background: rs.bg, border: `1px solid ${rs.border}`,
+                    display: 'flex', alignItems: 'center', justifyContent: 'center',
+                    fontSize: 13, fontWeight: 600, color: rs.color,
+                  }}>
                     {u.name.split(' ').map(w => w[0]).join('').slice(0, 2).toUpperCase()}
                   </div>
                   <div>
-                    <div className="flex items-center gap-2">
-                      <span className="font-semibold text-sm" style={{ color: '#e2e2f0' }}>{u.name}</span>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                      <span style={{ fontSize: 14, fontWeight: 500, color: '#111827' }}>{u.name}</span>
                       {isCurrent && (
-                        <span className="font-mono text-[9px] px-2 py-0.5 rounded-full" style={{ background: '#1a2a5e', color: '#6090ff' }}>YOU</span>
+                        <span style={{ fontFamily: 'JetBrains Mono, monospace', fontSize: 10, padding: '2px 7px', borderRadius: 4, background: '#eff6ff', color: '#1d4ed8' }}>you</span>
                       )}
                     </div>
-                    <div className="text-xs mt-0.5" style={{ color: '#5a5a7a' }}>{u.email}</div>
+                    <div style={{ fontSize: 12, color: '#9ca3af', marginTop: 2 }}>{u.email}</div>
                   </div>
                 </div>
-                <span
-                  className="font-mono text-[10px] font-bold px-3 py-1 rounded-full"
-                  style={{ background: rs.bg, color: rs.color }}
-                >
-                  {rs.label.toUpperCase()}
+                <span style={{
+                  fontFamily: 'JetBrains Mono, monospace', fontSize: 11, fontWeight: 500,
+                  padding: '4px 10px', borderRadius: 6,
+                  background: rs.bg, color: rs.color, border: `1px solid ${rs.border}`,
+                }}>
+                  {rs.label}
                 </span>
               </div>
 
               <div>
-                <div className="font-mono text-[9px] mb-2" style={{ color: '#5a5a7a', letterSpacing: '0.1em' }}>PERMISSIONS</div>
-                <div className="flex flex-wrap gap-1.5">
-                  {perms.map(p => (
-                    <span
-                      key={p}
-                      className="font-mono text-[9px] px-2.5 py-1 rounded-md"
-                      style={{ background: '#1a1a2e', color: '#6a6a8a', border: '1px solid #2a2a3e' }}
-                    >
-                      <i className="ti ti-check mr-1" style={{ color: '#4ade80', fontSize: 10 }} />
-                      {p}
-                    </span>
-                  ))}
-                  {/* Show denied perms for lower roles */}
-                  {u.role !== 'admin' && PERMISSIONS.admin.filter(p => !perms.includes(p)).map(p => (
-                    <span
-                      key={p}
-                      className="font-mono text-[9px] px-2.5 py-1 rounded-md"
-                      style={{ background: '#1a1a1a', color: '#3a3a4a', border: '1px solid #1e1e28' }}
-                    >
-                      <i className="ti ti-minus mr-1" style={{ color: '#3a3a5a', fontSize: 10 }} />
-                      {p}
-                    </span>
-                  ))}
+                <div style={{ fontFamily: 'JetBrains Mono, monospace', fontSize: 10, color: '#9ca3af', letterSpacing: '0.08em', textTransform: 'uppercase', marginBottom: 8 }}>Permissions</div>
+                <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6 }}>
+                  {ALL_PERMISSIONS.map(p => {
+                    const has = perms.includes(p)
+                    return (
+                      <span
+                        key={p}
+                        style={{
+                          fontFamily: 'JetBrains Mono, monospace', fontSize: 11,
+                          padding: '4px 10px', borderRadius: 6,
+                          background: has ? '#f9fafb' : 'transparent',
+                          color: has ? '#374151' : '#d1d5db',
+                          border: `1px solid ${has ? '#e5e7eb' : '#f3f4f6'}`,
+                          display: 'inline-flex', alignItems: 'center', gap: 5,
+                        }}
+                      >
+                        <i className={`ti ${has ? 'ti-check' : 'ti-x'}`} style={{ fontSize: 11, color: has ? '#16a34a' : '#d1d5db' }} />
+                        {p}
+                      </span>
+                    )
+                  })}
                 </div>
               </div>
             </div>
           )
         })}
-
-        {/* Role comparison table */}
-        <div className="rounded-xl border overflow-hidden" style={{ background: '#13131f', borderColor: '#2a2a3e' }}>
-          <div className="px-5 py-3 font-mono text-[10px]" style={{ color: '#5a5a7a', letterSpacing: '0.08em', borderBottom: '1px solid #2a2a3e' }}>
-            ROLE PERMISSION MATRIX
-          </div>
-          <table className="w-full">
-            <thead>
-              <tr style={{ borderBottom: '1px solid #2a2a3e' }}>
-                <th className="text-left px-5 py-3 font-mono text-[9px]" style={{ color: '#5a5a7a', letterSpacing: '0.08em', fontWeight: 400 }}>PERMISSION</th>
-                {['admin','manager','staff'].map(r => (
-                  <th key={r} className="text-center px-4 py-3 font-mono text-[9px]" style={{ color: ROLE_STYLES[r].color, letterSpacing: '0.08em', fontWeight: 600 }}>
-                    {r.toUpperCase()}
-                  </th>
-                ))}
-              </tr>
-            </thead>
-            <tbody>
-              {PERMISSIONS.admin.map(perm => (
-                <tr key={perm} style={{ borderBottom: '1px solid #1a1a28' }}>
-                  <td className="px-5 py-2.5 text-xs" style={{ color: '#9090b8' }}>{perm}</td>
-                  {['admin','manager','staff'].map(r => (
-                    <td key={r} className="px-4 py-2.5 text-center">
-                      {PERMISSIONS[r].includes(perm)
-                        ? <i className="ti ti-check" style={{ color: '#4ade80', fontSize: 14 }} />
-                        : <i className="ti ti-minus" style={{ color: '#2a2a3a', fontSize: 14 }} />
-                      }
-                    </td>
-                  ))}
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
       </div>
     </div>
   )

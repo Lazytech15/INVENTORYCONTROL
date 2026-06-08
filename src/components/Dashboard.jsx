@@ -1,9 +1,28 @@
 import { useMemo } from 'react'
-import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, PieChart, Pie, Cell, LineChart, Line } from 'recharts'
+import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, PieChart, Pie, Cell } from 'recharts'
 import { useApp } from '../context/AppContext.jsx'
 import { subDays, format } from 'date-fns'
 
-const COLORS = ['#3a5aff', '#ff6b4a', '#4ade80', '#f8c94e', '#c084fc', '#38bdf8']
+const CAT_COLORS = ['#6366f1', '#f59e0b', '#10b981', '#3b82f6', '#f43f5e', '#8b5cf6']
+
+function fmt(n) {
+  if (n >= 1000000) return `₱${(n / 1000000).toFixed(1)}M`
+  if (n >= 1000) return `₱${(n / 1000).toFixed(1)}K`
+  return `₱${n.toLocaleString()}`
+}
+
+const tooltipStyle = {
+  contentStyle: { background: '#fff', border: '1px solid #e5e7eb', borderRadius: 8, fontSize: 12, fontFamily: 'JetBrains Mono, monospace', color: '#374151', boxShadow: '0 4px 12px rgba(0,0,0,0.08)' },
+  cursor: { fill: 'rgba(0,0,0,0.03)' },
+}
+
+const cardStyle = {
+  background: '#fff',
+  border: '1px solid #e5e7eb',
+  borderRadius: 14,
+  padding: '18px',
+  boxShadow: '0 4px 16px rgba(0,0,0,0.06), 0 1px 4px rgba(0,0,0,0.04)',
+}
 
 export default function Dashboard({ setPage }) {
   const { state } = useApp()
@@ -20,7 +39,6 @@ export default function Dashboard({ setPage }) {
     return { totalSKUs, totalValue, lowStock, totalQty, todayOut }
   }, [products, movements, alerts])
 
-  // Weekly movement
   const weeklyData = useMemo(() => {
     return Array.from({ length: 7 }, (_, i) => {
       const date = format(subDays(new Date(), 6 - i), 'yyyy-MM-dd')
@@ -34,7 +52,6 @@ export default function Dashboard({ setPage }) {
     })
   }, [movements])
 
-  // Category breakdown
   const categoryData = useMemo(() => {
     const cats = {}
     products.forEach(p => {
@@ -42,52 +59,48 @@ export default function Dashboard({ setPage }) {
     })
     const total = Object.values(cats).reduce((s, v) => s + v, 0)
     return Object.entries(cats).map(([name, val], i) => ({
-      name,
-      value: Math.round((val / total) * 100),
-      color: COLORS[i % COLORS.length],
+      name, value: Math.round((val / total) * 100), color: CAT_COLORS[i % CAT_COLORS.length],
     }))
   }, [products])
 
-  // Top products by value
   const topProducts = useMemo(() =>
-    [...products]
-      .sort((a, b) => b.qty * b.salePrice - a.qty * a.salePrice)
-      .slice(0, 5)
-      .map(p => ({ name: p.name.slice(0, 20), value: p.qty * p.salePrice })),
+    [...products].sort((a, b) => b.qty * b.salePrice - a.qty * a.salePrice).slice(0, 5)
+      .map(p => ({ name: p.name.slice(0, 22), value: p.qty * p.salePrice })),
     [products]
   )
 
-  const STATUS = {
-    critical: { label: 'CRITICAL', bg: '#2d0f0f', color: '#f87171' },
-    low:      { label: 'LOW',      bg: '#3a1a0d', color: '#fb923c' },
-    out:      { label: 'OUT',      bg: '#1a0d2e', color: '#c084fc' },
-    ok:       { label: 'HEALTHY',  bg: '#0d3320', color: '#4ade80' },
-  }
-
-  function fmt(n) {
-    if (n >= 1000000) return `₱${(n/1000000).toFixed(1)}M`
-    if (n >= 1000) return `₱${(n/1000).toFixed(1)}K`
-    return `₱${n.toLocaleString()}`
-  }
-
   const recentMovements = movements.slice(0, 8)
 
+  const STATUS = {
+    critical: { label: 'Critical', bg: '#fef2f2', color: '#991b1b', dot: '#dc2626' },
+    low:      { label: 'Low',      bg: '#fffbeb', color: '#92400e', dot: '#d97706' },
+    out:      { label: 'Out',      bg: '#f3f4f6', color: '#374151', dot: '#6b7280' },
+  }
+
+  const kpis = [
+    { val: metrics.totalSKUs, lbl: 'Total SKUs', icon: 'ti-package', iconBg: '#f3f4f6', iconColor: '#374151', sub: `${metrics.totalQty.toLocaleString()} units`, accent: '#6366f1' },
+    { val: fmt(metrics.totalValue), lbl: 'Stock value', icon: 'ti-cash', iconBg: '#f0fdf4', iconColor: '#16a34a', sub: 'at sale price', accent: '#10b981' },
+    { val: metrics.lowStock, lbl: 'Low stock', icon: 'ti-alert-triangle', iconBg: '#fffbeb', iconColor: '#d97706', sub: 'need reorder', accent: '#f59e0b' },
+    { val: metrics.todayOut, lbl: "Today's outbound", icon: 'ti-trending-up', iconBg: '#eff6ff', iconColor: '#2563eb', sub: 'units dispatched', accent: '#3b82f6' },
+  ]
+
   return (
-    <div className="p-6 space-y-5 overflow-y-auto h-full">
+    <div style={{ padding: '24px', overflowY: 'auto', height: '100%', display: 'flex', flexDirection: 'column', gap: 20, background: '#f8f9fb' }}>
       {/* Header */}
-      <div className="flex items-center justify-between">
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
         <div>
-          <h1 className="font-syne font-extrabold text-xl text-white">Dashboard</h1>
-          <p className="font-mono text-xs mt-0.5" style={{ color: '#5a5a7a' }}>
-            {format(new Date(), 'EEEE, MMMM d, yyyy')} — Real-time overview
+          <h1 style={{ fontSize: 18, fontWeight: 700, color: '#111827', margin: 0 }}>Dashboard</h1>
+          <p style={{ fontFamily: 'JetBrains Mono, monospace', fontSize: 11, color: '#9ca3af', marginTop: 2 }}>
+            {format(new Date(), 'EEEE, MMMM d, yyyy')}
           </p>
         </div>
         {alerts.length > 0 && (
-          <button
-            onClick={() => setPage('alerts')}
-            className="flex items-center gap-2 px-3 py-2 rounded-lg text-xs font-medium animate-pulse-slow"
-            style={{ background: '#2d1a0d', color: '#fb923c', border: '1px solid #4a2a0d' }}
-          >
+          <button onClick={() => setPage('alerts')} style={{
+            display: 'flex', alignItems: 'center', gap: 8,
+            padding: '8px 14px', borderRadius: 8, fontSize: 13, fontWeight: 500,
+            background: '#fffbeb', color: '#92400e', border: '1px solid #fde68a', cursor: 'pointer',
+            boxShadow: '0 2px 8px rgba(251,191,36,0.2)',
+          }}>
             <i className="ti ti-bell-ringing" />
             {alerts.length} low stock alert{alerts.length > 1 ? 's' : ''}
           </button>
@@ -95,74 +108,66 @@ export default function Dashboard({ setPage }) {
       </div>
 
       {/* KPI Cards */}
-      <div className="grid grid-cols-4 gap-3">
-        {[
-          { val: metrics.totalSKUs.toLocaleString(), lbl: 'TOTAL SKUs',     icon: 'ti-package',      color: '#3a5aff', sub: `${metrics.totalQty} total units` },
-          { val: fmt(metrics.totalValue),            lbl: 'STOCK VALUE',    icon: 'ti-cash',         color: '#4ade80', sub: 'at sale price'   },
-          { val: metrics.lowStock,                   lbl: 'LOW STOCK',      icon: 'ti-alert-triangle',color: '#fb923c', sub: 'need reorder'    },
-          { val: metrics.todayOut,                   lbl: "TODAY'S OUTBOUND",icon: 'ti-trending-up', color: '#c084fc', sub: 'units dispatched' },
-        ].map((k, i) => (
-          <div
-            key={i}
-            className="rounded-xl p-4 border"
-            style={{ background: '#13131f', borderColor: '#2a2a3e' }}
-          >
-            <div className="flex items-start justify-between mb-3">
-              <div
-                className="w-9 h-9 rounded-lg flex items-center justify-center"
-                style={{ background: `${k.color}18` }}
-              >
-                <i className={`ti ${k.icon}`} style={{ color: k.color, fontSize: 18 }} />
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4,1fr)', gap: 12 }}>
+        {kpis.map((k, i) => (
+          <div key={i} style={{
+            ...cardStyle,
+            boxShadow: i % 2 === 0
+              ? '0 4px 16px rgba(0,0,0,0.06), 0 1px 4px rgba(0,0,0,0.04)'
+              : '0 6px 24px rgba(99,102,241,0.07), 0 2px 8px rgba(0,0,0,0.05)',
+            background: i % 2 === 0 ? '#ffffff' : '#fafbff',
+          }}>
+            <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', marginBottom: 12 }}>
+              <div style={{ width: 36, height: 36, borderRadius: 9, background: k.iconBg, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                <i className={`ti ${k.icon}`} style={{ color: k.iconColor, fontSize: 17 }} />
               </div>
             </div>
-            <div className="font-syne font-extrabold text-2xl text-white leading-none">{k.val}</div>
-            <div className="font-mono text-[10px] mt-1" style={{ color: '#5a5a7a', letterSpacing: '0.08em' }}>{k.lbl}</div>
-            <div className="text-xs mt-1" style={{ color: '#3a3a5a' }}>{k.sub}</div>
+            <div style={{ fontSize: 22, fontWeight: 700, color: '#111827', lineHeight: 1 }}>{k.val}</div>
+            <div style={{ fontSize: 12, color: '#6b7280', marginTop: 5 }}>{k.lbl}</div>
+            <div style={{ fontFamily: 'JetBrains Mono, monospace', fontSize: 11, color: '#d1d5db', marginTop: 3 }}>{k.sub}</div>
           </div>
         ))}
       </div>
 
       {/* Charts row */}
-      <div className="grid grid-cols-3 gap-3">
-        {/* Weekly bar chart */}
-        <div className="col-span-2 rounded-xl border p-4" style={{ background: '#13131f', borderColor: '#2a2a3e' }}>
-          <div className="font-mono text-[10px] mb-3" style={{ color: '#5a5a7a', letterSpacing: '0.08em' }}>WEEKLY STOCK MOVEMENT (UNITS)</div>
+      <div style={{ display: 'grid', gridTemplateColumns: '2fr 1fr', gap: 12 }}>
+        <div style={cardStyle}>
+          <div style={{ fontFamily: 'JetBrains Mono, monospace', fontSize: 11, color: '#9ca3af', marginBottom: 14, letterSpacing: '0.05em' }}>Weekly stock movement</div>
           <ResponsiveContainer width="100%" height={120}>
             <BarChart data={weeklyData} barSize={10} barGap={2}>
-              <XAxis dataKey="day" tick={{ fontSize: 9, fill: '#5a5a7a', fontFamily: 'DM Mono, monospace' }} axisLine={false} tickLine={false} />
+              <XAxis dataKey="day" tick={{ fontSize: 10, fill: '#9ca3af', fontFamily: 'JetBrains Mono, monospace' }} axisLine={false} tickLine={false} />
               <YAxis hide />
-              <Tooltip contentStyle={{ background: '#111128', border: '1px solid #2e2e50', borderRadius: 8, fontSize: 11, fontFamily: 'DM Mono, monospace', color: '#e0e0f8' }} cursor={{ fill: 'rgba(255,255,255,0.03)' }} />
-              <Bar dataKey="inbound" fill="#3a5aff" radius={[2,2,0,0]} name="Inbound" />
-              <Bar dataKey="outbound" fill="#ff6b4a" radius={[2,2,0,0]} name="Outbound" />
+              <Tooltip {...tooltipStyle} />
+              <Bar dataKey="inbound" fill="#6366f1" radius={[2,2,0,0]} name="Inbound" />
+              <Bar dataKey="outbound" fill="#f59e0b" radius={[2,2,0,0]} name="Outbound" />
             </BarChart>
           </ResponsiveContainer>
-          <div className="flex gap-4 mt-2">
-            {[['#3a5aff','INBOUND'],['#ff6b4a','OUTBOUND']].map(([c,l]) => (
-              <div key={l} className="flex items-center gap-1.5">
-                <span className="w-2 h-2 rounded-full" style={{ background: c }} />
-                <span className="font-mono text-[9px]" style={{ color: '#5a5a7a' }}>{l}</span>
+          <div style={{ display: 'flex', gap: 16, marginTop: 10 }}>
+            {[['#6366f1','Inbound'],['#f59e0b','Outbound']].map(([c,l]) => (
+              <div key={l} style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                <span style={{ width: 8, height: 8, borderRadius: '50%', background: c }} />
+                <span style={{ fontFamily: 'JetBrains Mono, monospace', fontSize: 10, color: '#9ca3af' }}>{l}</span>
               </div>
             ))}
           </div>
         </div>
 
-        {/* Category pie */}
-        <div className="rounded-xl border p-4" style={{ background: '#13131f', borderColor: '#2a2a3e' }}>
-          <div className="font-mono text-[10px] mb-3" style={{ color: '#5a5a7a', letterSpacing: '0.08em' }}>STOCK VALUE BY CATEGORY</div>
-          <div className="flex flex-col items-center">
+        <div style={{ ...cardStyle, background: '#fafbff', boxShadow: '0 6px 24px rgba(99,102,241,0.07), 0 2px 8px rgba(0,0,0,0.05)' }}>
+          <div style={{ fontFamily: 'JetBrains Mono, monospace', fontSize: 11, color: '#9ca3af', marginBottom: 14, letterSpacing: '0.05em' }}>Value by category</div>
+          <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
             <PieChart width={100} height={100}>
-              <Pie data={categoryData} cx={50} cy={50} innerRadius={30} outerRadius={46} dataKey="value" strokeWidth={0}>
+              <Pie data={categoryData} cx={50} cy={50} innerRadius={28} outerRadius={44} dataKey="value" strokeWidth={0}>
                 {categoryData.map((e, i) => <Cell key={i} fill={e.color} />)}
               </Pie>
             </PieChart>
-            <div className="w-full mt-2 space-y-1">
+            <div style={{ width: '100%', marginTop: 8, display: 'flex', flexDirection: 'column', gap: 4 }}>
               {categoryData.map(c => (
-                <div key={c.name} className="flex justify-between items-center text-[9px] font-mono" style={{ color: '#6a6a8a' }}>
-                  <span className="flex items-center gap-1">
-                    <span className="w-1.5 h-1.5 rounded-full" style={{ background: c.color }} />
+                <div key={c.name} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                  <span style={{ display: 'flex', alignItems: 'center', gap: 5, fontFamily: 'JetBrains Mono, monospace', fontSize: 10, color: '#9ca3af' }}>
+                    <span style={{ width: 6, height: 6, borderRadius: '50%', background: c.color, flexShrink: 0 }} />
                     {c.name}
                   </span>
-                  <span>{c.value}%</span>
+                  <span style={{ fontFamily: 'JetBrains Mono, monospace', fontSize: 10, color: '#6b7280' }}>{c.value}%</span>
                 </div>
               ))}
             </div>
@@ -171,43 +176,41 @@ export default function Dashboard({ setPage }) {
       </div>
 
       {/* Bottom row */}
-      <div className="grid grid-cols-2 gap-3">
-        {/* Top products */}
-        <div className="rounded-xl border p-4" style={{ background: '#13131f', borderColor: '#2a2a3e' }}>
-          <div className="font-mono text-[10px] mb-3" style={{ color: '#5a5a7a', letterSpacing: '0.08em' }}>TOP PRODUCTS BY VALUE</div>
+      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
+        <div style={cardStyle}>
+          <div style={{ fontFamily: 'JetBrains Mono, monospace', fontSize: 11, color: '#9ca3af', marginBottom: 14 }}>Top products by value</div>
           <ResponsiveContainer width="100%" height={130}>
             <BarChart data={topProducts} layout="vertical" barSize={8}>
               <XAxis type="number" hide />
-              <YAxis type="category" dataKey="name" tick={{ fontSize: 9, fill: '#6a6a8a', fontFamily: 'DM Mono, monospace' }} axisLine={false} tickLine={false} width={120} />
-              <Tooltip formatter={v => [`₱${v.toLocaleString()}`, 'Value']} contentStyle={{ background: '#111128', border: '1px solid #2e2e50', borderRadius: 8, fontSize: 11, fontFamily: 'DM Mono, monospace', color: '#e0e0f8' }} cursor={{ fill: 'rgba(255,255,255,0.03)' }} />
-              <Bar dataKey="value" fill="#3a5aff" radius={[0,2,2,0]} />
+              <YAxis type="category" dataKey="name" tick={{ fontSize: 10, fill: '#9ca3af', fontFamily: 'JetBrains Mono, monospace' }} axisLine={false} tickLine={false} width={130} />
+              <Tooltip formatter={v => [`₱${v.toLocaleString()}`, 'Value']} {...tooltipStyle} />
+              <Bar dataKey="value" fill="#6366f1" radius={[0,2,2,0]} />
             </BarChart>
           </ResponsiveContainer>
         </div>
 
-        {/* Recent movements */}
-        <div className="rounded-xl border p-4" style={{ background: '#13131f', borderColor: '#2a2a3e' }}>
-          <div className="font-mono text-[10px] mb-3" style={{ color: '#5a5a7a', letterSpacing: '0.08em' }}>RECENT MOVEMENTS</div>
-          <div className="space-y-2 overflow-y-auto" style={{ maxHeight: 160 }}>
-            {recentMovements.map(m => (
-              <div key={m.id} className="flex items-center gap-2 text-xs">
-                <span
-                  className="w-5 h-5 rounded flex items-center justify-center flex-shrink-0"
-                  style={{ background: m.type === 'inbound' ? '#0d3320' : '#2d1a0d' }}
-                >
-                  <i
-                    className={`ti ${m.type === 'inbound' ? 'ti-arrow-down' : 'ti-arrow-up'}`}
-                    style={{ fontSize: 10, color: m.type === 'inbound' ? '#4ade80' : '#fb923c' }}
-                  />
+        <div style={{ ...cardStyle, background: '#fafbff', boxShadow: '0 6px 24px rgba(99,102,241,0.07), 0 2px 8px rgba(0,0,0,0.05)' }}>
+          <div style={{ fontFamily: 'JetBrains Mono, monospace', fontSize: 11, color: '#9ca3af', marginBottom: 14 }}>Recent movements</div>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 8, maxHeight: 160, overflowY: 'auto' }}>
+            {recentMovements.map((m, i) => (
+              <div key={m.id} style={{
+                display: 'flex', alignItems: 'center', gap: 10,
+                padding: '6px 8px', borderRadius: 8,
+                background: i % 2 === 0 ? '#fff' : '#f3f6ff',
+              }}>
+                <span style={{
+                  width: 22, height: 22, borderRadius: 6, flexShrink: 0,
+                  background: m.type === 'inbound' ? '#f0fdf4' : '#fffbeb',
+                  display: 'flex', alignItems: 'center', justifyContent: 'center',
+                }}>
+                  <i className={`ti ${m.type === 'inbound' ? 'ti-arrow-down' : 'ti-arrow-up'}`}
+                    style={{ fontSize: 11, color: m.type === 'inbound' ? '#16a34a' : '#d97706' }} />
                 </span>
-                <div className="flex-1 min-w-0">
-                  <div className="text-xs font-medium truncate" style={{ color: '#c0c0e0' }}>{m.productName}</div>
-                  <div className="font-mono text-[9px]" style={{ color: '#5a5a7a' }}>{m.date}</div>
+                <div style={{ flex: 1, minWidth: 0 }}>
+                  <div style={{ fontSize: 12, fontWeight: 500, color: '#111827', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{m.productName}</div>
+                  <div style={{ fontFamily: 'JetBrains Mono, monospace', fontSize: 10, color: '#d1d5db' }}>{m.date}</div>
                 </div>
-                <span
-                  className="font-mono text-xs font-bold"
-                  style={{ color: m.type === 'inbound' ? '#4ade80' : '#fb923c' }}
-                >
+                <span style={{ fontFamily: 'JetBrains Mono, monospace', fontSize: 12, fontWeight: 500, color: m.type === 'inbound' ? '#16a34a' : '#d97706' }}>
                   {m.type === 'inbound' ? '+' : '-'}{m.qty}
                 </span>
               </div>
@@ -218,37 +221,39 @@ export default function Dashboard({ setPage }) {
 
       {/* Low stock table */}
       {alerts.length > 0 && (
-        <div className="rounded-xl border overflow-hidden" style={{ background: '#13131f', borderColor: '#2a2a3e' }}>
-          <div className="px-4 py-3 flex items-center justify-between" style={{ borderBottom: '1px solid #2a2a3e' }}>
-            <span className="font-mono text-[10px]" style={{ color: '#5a5a7a', letterSpacing: '0.08em' }}>LOW STOCK — PRIORITY REORDER</span>
-            <button onClick={() => setPage('alerts')} className="font-mono text-[10px] hover:opacity-80" style={{ color: '#1a4fff' }}>View all →</button>
+        <div style={{ background: '#fff', border: '1px solid #e5e7eb', borderRadius: 14, overflow: 'hidden', boxShadow: '0 4px 16px rgba(0,0,0,0.06), 0 1px 4px rgba(0,0,0,0.04)' }}>
+          <div style={{ padding: '14px 20px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', borderBottom: '1px solid #f3f4f6' }}>
+            <span style={{ fontFamily: 'JetBrains Mono, monospace', fontSize: 11, color: '#9ca3af', letterSpacing: '0.05em' }}>Low stock — priority reorder</span>
+            <button onClick={() => setPage('alerts')} style={{ fontFamily: 'JetBrains Mono, monospace', fontSize: 11, color: '#6366f1', background: 'none', border: 'none', cursor: 'pointer' }}>View all →</button>
           </div>
-          <div className="overflow-x-auto">
-            <table className="w-full">
-              <thead>
-                <tr style={{ borderBottom: '1px solid #1e1e30' }}>
-                  {['SKU','PRODUCT','QTY','REORDER PT.','STATUS'].map(h => (
-                    <th key={h} className="text-left px-4 py-2 font-mono text-[9px]" style={{ color: '#5a5a7a', letterSpacing: '0.08em', fontWeight: 400 }}>{h}</th>
-                  ))}
-                </tr>
-              </thead>
-              <tbody>
-                {alerts.slice(0, 5).map(a => (
-                  <tr key={a.id} style={{ borderBottom: '1px solid #1a1a28' }}>
-                    <td className="px-4 py-2.5 font-mono text-[10px]" style={{ color: '#6a6a8a' }}>{a.sku}</td>
-                    <td className="px-4 py-2.5 text-xs" style={{ color: '#c0c0e0' }}>{a.name}</td>
-                    <td className="px-4 py-2.5 font-mono text-xs font-bold" style={{ color: '#f87171' }}>{a.qty}</td>
-                    <td className="px-4 py-2.5 font-mono text-[10px]" style={{ color: '#6a6a8a' }}>{a.reorderAt}</td>
-                    <td className="px-4 py-2.5">
-                      <span className="font-mono text-[9px] font-bold px-2 py-0.5 rounded" style={{ background: STATUS[a.severity].bg, color: STATUS[a.severity].color }}>
-                        {STATUS[a.severity].label}
+          <table style={{ width: '100%', borderCollapse: 'collapse' }}>
+            <thead>
+              <tr style={{ background: '#f9fafb', borderBottom: '1px solid #f3f4f6' }}>
+                {['SKU','Product','Qty','Reorder pt.','Status'].map(h => (
+                  <th key={h} style={{ textAlign: 'left', padding: '9px 20px', fontSize: 11, fontWeight: 500, color: '#9ca3af' }}>{h}</th>
+                ))}
+              </tr>
+            </thead>
+            <tbody>
+              {alerts.slice(0, 5).map((a, i) => {
+                const st = STATUS[a.severity] || STATUS.low
+                return (
+                  <tr key={a.id} style={{ background: i % 2 === 0 ? '#fff' : '#fafbff', borderBottom: '1px solid #f3f4f6' }}>
+                    <td style={{ padding: '10px 20px', fontFamily: 'JetBrains Mono, monospace', fontSize: 11, color: '#9ca3af' }}>{a.sku}</td>
+                    <td style={{ padding: '10px 20px', fontSize: 13, color: '#111827' }}>{a.name}</td>
+                    <td style={{ padding: '10px 20px', fontFamily: 'JetBrains Mono, monospace', fontSize: 13, fontWeight: 500, color: '#dc2626' }}>{a.qty}</td>
+                    <td style={{ padding: '10px 20px', fontFamily: 'JetBrains Mono, monospace', fontSize: 12, color: '#9ca3af' }}>{a.reorderAt}</td>
+                    <td style={{ padding: '10px 20px' }}>
+                      <span style={{ display: 'inline-flex', alignItems: 'center', gap: 5, padding: '3px 8px', borderRadius: 999, fontSize: 11, fontWeight: 500, background: st.bg, color: st.color }}>
+                        <span style={{ width: 5, height: 5, borderRadius: '50%', background: st.dot }} />
+                        {st.label}
                       </span>
                     </td>
                   </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
+                )
+              })}
+            </tbody>
+          </table>
         </div>
       )}
     </div>
