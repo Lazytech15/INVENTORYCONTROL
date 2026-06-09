@@ -2,6 +2,8 @@ import { useState, useEffect } from 'react'
 import { useApp } from '../context/AppContext.jsx'
 import logo from '../../public/inventorycontrol_logo.png'
 
+const WORKER_URL = 'https://sendtouchemail.eablao.workers.dev'
+
 // ─── Login Modal ──────────────────────────────────────────────────────────────
 function LoginModal({ onClose }) {
   const { dispatch, USERS } = useApp()
@@ -10,7 +12,6 @@ function LoginModal({ onClose }) {
   const [error, setError] = useState('')
   const [loading, setLoading] = useState(false)
 
-  // Close on Escape key
   useEffect(() => {
     const handler = (e) => { if (e.key === 'Escape') onClose() }
     window.addEventListener('keydown', handler)
@@ -62,7 +63,6 @@ function LoginModal({ onClose }) {
           position: 'relative',
         }}
       >
-        {/* Close */}
         <button onClick={onClose} style={{
           position: 'absolute', top: 16, right: 16,
           background: '#f3f4f6', border: 'none', borderRadius: 8,
@@ -71,99 +71,42 @@ function LoginModal({ onClose }) {
           display: 'flex', alignItems: 'center', justifyContent: 'center',
         }}>✕</button>
 
-        {/* Logo header */}
         <div style={{ marginBottom: '1.5rem', textAlign: 'center', display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
-          <img
-            src={logo}
-            alt="Inventory Control"
-            style={{ height: 160, width: 'auto', objectFit: 'contain', marginBottom: 10 }}
-          />
+          <img src={logo} alt="Inventory Control" style={{ height: 160, width: 'auto', objectFit: 'contain', marginBottom: 10 }} />
           <p style={{ fontSize: 14, color: '#6b7280', margin: 0 }}>Sign in to your workspace</p>
         </div>
 
         <form onSubmit={handleLogin} style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
           <div>
-            <label style={{ display: 'block', fontSize: 12, fontWeight: 600, color: '#374151', marginBottom: 6, textTransform: 'uppercase', letterSpacing: '0.05em' }}>
-              Email address
-            </label>
-            <input
-              type="email"
-              value={email}
-              onChange={e => setEmail(e.target.value)}
-              placeholder="you@company.com"
-              required
-              style={{
-                width: '100%', borderRadius: 10,
-                border: '1.5px solid #e5e7eb',
-                background: '#f9fafb', color: '#111827',
-                fontSize: 14, padding: '11px 14px',
-                outline: 'none', transition: 'border-color 0.15s, box-shadow 0.15s',
-                boxSizing: 'border-box',
-              }}
+            <label style={{ display: 'block', fontSize: 12, fontWeight: 600, color: '#374151', marginBottom: 6, textTransform: 'uppercase', letterSpacing: '0.05em' }}>Email address</label>
+            <input type="email" value={email} onChange={e => setEmail(e.target.value)} placeholder="you@company.com" required
+              style={{ width: '100%', borderRadius: 10, border: '1.5px solid #e5e7eb', background: '#f9fafb', color: '#111827', fontSize: 14, padding: '11px 14px', outline: 'none', transition: 'border-color 0.15s, box-shadow 0.15s', boxSizing: 'border-box' }}
               onFocus={e => { e.target.style.borderColor = '#1a3fd4'; e.target.style.boxShadow = '0 0 0 3px rgba(26,63,212,0.12)' }}
               onBlur={e => { e.target.style.borderColor = '#e5e7eb'; e.target.style.boxShadow = 'none' }}
             />
           </div>
           <div>
-            <label style={{ display: 'block', fontSize: 12, fontWeight: 600, color: '#374151', marginBottom: 6, textTransform: 'uppercase', letterSpacing: '0.05em' }}>
-              Password
-            </label>
-            <input
-              type="password"
-              value={password}
-              onChange={e => setPassword(e.target.value)}
-              placeholder="••••••••"
-              required
-              style={{
-                width: '100%', borderRadius: 10,
-                border: '1.5px solid #e5e7eb',
-                background: '#f9fafb', color: '#111827',
-                fontSize: 14, padding: '11px 14px',
-                outline: 'none', transition: 'border-color 0.15s, box-shadow 0.15s',
-                boxSizing: 'border-box',
-              }}
+            <label style={{ display: 'block', fontSize: 12, fontWeight: 600, color: '#374151', marginBottom: 6, textTransform: 'uppercase', letterSpacing: '0.05em' }}>Password</label>
+            <input type="password" value={password} onChange={e => setPassword(e.target.value)} placeholder="••••••••" required
+              style={{ width: '100%', borderRadius: 10, border: '1.5px solid #e5e7eb', background: '#f9fafb', color: '#111827', fontSize: 14, padding: '11px 14px', outline: 'none', transition: 'border-color 0.15s, box-shadow 0.15s', boxSizing: 'border-box' }}
               onFocus={e => { e.target.style.borderColor = '#1a3fd4'; e.target.style.boxShadow = '0 0 0 3px rgba(26,63,212,0.12)' }}
               onBlur={e => { e.target.style.borderColor = '#e5e7eb'; e.target.style.boxShadow = 'none' }}
             />
           </div>
 
           {error && (
-            <div style={{
-              background: '#fef2f2', color: '#dc2626',
-              border: '1px solid #fecaca',
-              borderRadius: 8, fontSize: 13, padding: '10px 14px',
-            }}>{error}</div>
+            <div style={{ background: '#fef2f2', color: '#dc2626', border: '1px solid #fecaca', borderRadius: 8, fontSize: 13, padding: '10px 14px' }}>{error}</div>
           )}
 
-          <button
-            type="submit"
-            disabled={loading}
-            style={{
-              width: '100%', borderRadius: 10,
-              background: 'linear-gradient(135deg, #1a3fd4, #0ea5e9)',
-              color: '#fff', fontSize: 14, fontWeight: 700,
-              padding: '12px 0', marginTop: 4,
-              border: 'none', cursor: loading ? 'not-allowed' : 'pointer',
-              opacity: loading ? 0.7 : 1,
-              transition: 'opacity 0.15s, transform 0.1s',
-              boxShadow: '0 4px 16px rgba(26,63,212,0.35)',
-              letterSpacing: '0.02em',
-            }}
+          <button type="submit" disabled={loading}
+            style={{ width: '100%', borderRadius: 10, background: 'linear-gradient(135deg, #1a3fd4, #0ea5e9)', color: '#fff', fontSize: 14, fontWeight: 700, padding: '12px 0', marginTop: 4, border: 'none', cursor: loading ? 'not-allowed' : 'pointer', opacity: loading ? 0.7 : 1, transition: 'opacity 0.15s, transform 0.1s', boxShadow: '0 4px 16px rgba(26,63,212,0.35)', letterSpacing: '0.02em' }}
             onMouseEnter={e => { if (!loading) { e.currentTarget.style.opacity = '0.9'; e.currentTarget.style.transform = 'translateY(-1px)' } }}
             onMouseLeave={e => { e.currentTarget.style.opacity = loading ? '0.7' : '1'; e.currentTarget.style.transform = 'none' }}
-          >
-            {loading ? 'Signing in…' : 'Sign in →'}
-          </button>
+          >{loading ? 'Signing in…' : 'Sign in →'}</button>
         </form>
 
-        {/* Quick login */}
         <div style={{ borderTop: '1px solid #f3f4f6', marginTop: '1.5rem', paddingTop: '1.25rem' }}>
-          <p style={{
-            fontSize: 10, color: '#9ca3af', letterSpacing: '0.1em',
-            textTransform: 'uppercase', marginBottom: 10, fontWeight: 600,
-          }}>
-            Demo accounts — click to fill
-          </p>
+          <p style={{ fontSize: 10, color: '#9ca3af', letterSpacing: '0.1em', textTransform: 'uppercase', marginBottom: 10, fontWeight: 600 }}>Demo accounts — click to fill</p>
           <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
             {USERS.map(u => {
               const roleStyle = {
@@ -172,15 +115,8 @@ function LoginModal({ onClose }) {
                 staff:   { bg: '#fffbeb', color: '#b45309', border: '#fde68a' },
               }[u.role]
               return (
-                <button
-                  key={u.id}
-                  onClick={() => quickLogin(u)}
-                  style={{
-                    display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-                    background: '#f9fafb', border: '1px solid #f3f4f6',
-                    borderRadius: 8, padding: '9px 12px', cursor: 'pointer',
-                    transition: 'all 0.12s',
-                  }}
+                <button key={u.id} onClick={() => quickLogin(u)}
+                  style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', background: '#f9fafb', border: '1px solid #f3f4f6', borderRadius: 8, padding: '9px 12px', cursor: 'pointer', transition: 'all 0.12s' }}
                   onMouseEnter={e => { e.currentTarget.style.background = '#f3f4f6'; e.currentTarget.style.borderColor = '#e5e7eb' }}
                   onMouseLeave={e => { e.currentTarget.style.background = '#f9fafb'; e.currentTarget.style.borderColor = '#f3f4f6' }}
                 >
@@ -188,14 +124,7 @@ function LoginModal({ onClose }) {
                     <span style={{ fontSize: 13, fontWeight: 600, color: '#374151', display: 'block' }}>{u.name}</span>
                     <span style={{ fontSize: 11, color: '#9ca3af' }}>{u.email}</span>
                   </div>
-                  <span style={{
-                    fontSize: 10, padding: '3px 8px', borderRadius: 5,
-                    background: roleStyle.bg, color: roleStyle.color,
-                    border: `1px solid ${roleStyle.border}`,
-                    fontWeight: 700, letterSpacing: '0.05em', textTransform: 'uppercase',
-                  }}>
-                    {u.role}
-                  </span>
+                  <span style={{ fontSize: 10, padding: '3px 8px', borderRadius: 5, background: roleStyle.bg, color: roleStyle.color, border: `1px solid ${roleStyle.border}`, fontWeight: 700, letterSpacing: '0.05em', textTransform: 'uppercase' }}>{u.role}</span>
                 </button>
               )
             })}
@@ -223,13 +152,7 @@ function FeatureCard({ icon, title, desc, accent = '#1a3fd4' }) {
         cursor: 'default',
       }}
     >
-      <div style={{
-        width: 48, height: 48, borderRadius: 12,
-        background: `linear-gradient(135deg, ${accent}18, ${accent}30)`,
-        display: 'flex', alignItems: 'center', justifyContent: 'center',
-        fontSize: 24, marginBottom: '1rem',
-        border: `1px solid ${accent}22`,
-      }}>{icon}</div>
+      <div style={{ width: 48, height: 48, borderRadius: 12, background: `linear-gradient(135deg, ${accent}18, ${accent}30)`, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 24, marginBottom: '1rem', border: `1px solid ${accent}22` }}>{icon}</div>
       <h3 style={{ fontSize: 16, fontWeight: 700, color: '#0f1729', marginBottom: 6, fontFamily: "'Syne', sans-serif" }}>{title}</h3>
       <p style={{ fontSize: 14, color: '#6b7280', lineHeight: 1.6, margin: 0 }}>{desc}</p>
     </div>
@@ -248,30 +171,14 @@ function PricingCard({ plan, price, period, features, highlight, onCTA, ctaLabel
         border: highlight ? 'none' : '1.5px solid #e5e9f5',
         borderRadius: 20, padding: '2rem',
         position: 'relative', overflow: 'hidden',
-        boxShadow: highlight
-          ? '0 20px 60px rgba(26,63,212,0.35)'
-          : hovered ? '0 8px 32px rgba(0,0,0,0.1)' : '0 2px 8px rgba(0,0,0,0.05)',
+        boxShadow: highlight ? '0 20px 60px rgba(26,63,212,0.35)' : hovered ? '0 8px 32px rgba(0,0,0,0.1)' : '0 2px 8px rgba(0,0,0,0.05)',
         transform: highlight ? 'scale(1.04)' : hovered ? 'translateY(-4px)' : 'none',
         transition: 'all 0.22s ease',
         flex: '1 1 280px', maxWidth: 340,
       }}
     >
-      {highlight && (
-        <div style={{
-          position: 'absolute', top: 0, left: 0, right: 0, height: 3,
-          background: 'linear-gradient(90deg, #38bdf8, #818cf8)',
-        }} />
-      )}
-      {highlight && (
-        <div style={{
-          display: 'inline-block',
-          background: 'rgba(255,255,255,0.15)',
-          color: '#e0e7ff', fontSize: 11, fontWeight: 700,
-          padding: '4px 12px', borderRadius: 20,
-          marginBottom: '1rem', letterSpacing: '0.08em', textTransform: 'uppercase',
-          border: '1px solid rgba(255,255,255,0.2)',
-        }}>Most Popular</div>
-      )}
+      {highlight && <div style={{ position: 'absolute', top: 0, left: 0, right: 0, height: 3, background: 'linear-gradient(90deg, #38bdf8, #818cf8)' }} />}
+      {highlight && <div style={{ display: 'inline-block', background: 'rgba(255,255,255,0.15)', color: '#e0e7ff', fontSize: 11, fontWeight: 700, padding: '4px 12px', borderRadius: 20, marginBottom: '1rem', letterSpacing: '0.08em', textTransform: 'uppercase', border: '1px solid rgba(255,255,255,0.2)' }}>Most Popular</div>}
       <div style={{ marginBottom: '1.5rem' }}>
         <p style={{ fontSize: 13, fontWeight: 700, color: highlight ? '#93c5fd' : '#6b7280', textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: 8 }}>{plan}</p>
         <div style={{ display: 'flex', alignItems: 'baseline', gap: 4 }}>
@@ -280,38 +187,19 @@ function PricingCard({ plan, price, period, features, highlight, onCTA, ctaLabel
           <span style={{ fontSize: 14, color: highlight ? '#93c5fd' : '#9ca3af' }}>{period}</span>
         </div>
       </div>
-
       <ul style={{ listStyle: 'none', padding: 0, margin: '0 0 1.75rem', display: 'flex', flexDirection: 'column', gap: 10 }}>
         {features.map((f, i) => (
           <li key={i} style={{ display: 'flex', alignItems: 'flex-start', gap: 10, fontSize: 14, color: highlight ? '#c7d7fe' : '#374151' }}>
-            <span style={{
-              width: 18, height: 18, borderRadius: 5, flexShrink: 0, marginTop: 1,
-              background: highlight ? 'rgba(255,255,255,0.15)' : '#eff3ff',
-              display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 10,
-              color: highlight ? '#93c5fd' : '#1a3fd4',
-            }}>✓</span>
+            <span style={{ width: 18, height: 18, borderRadius: 5, flexShrink: 0, marginTop: 1, background: highlight ? 'rgba(255,255,255,0.15)' : '#eff3ff', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 10, color: highlight ? '#93c5fd' : '#1a3fd4' }}>✓</span>
             {f}
           </li>
         ))}
       </ul>
-
-      <button
-        onClick={onCTA}
-        style={{
-          width: '100%', padding: '12px',
-          borderRadius: 10, border: 'none',
-          background: highlight ? '#ffffff' : 'linear-gradient(135deg, #1a3fd4, #0ea5e9)',
-          color: highlight ? '#1a3fd4' : '#ffffff',
-          fontSize: 14, fontWeight: 700, cursor: 'pointer',
-          transition: 'all 0.15s',
-          boxShadow: highlight ? 'none' : '0 4px 14px rgba(26,63,212,0.3)',
-          letterSpacing: '0.02em',
-        }}
+      <button onClick={onCTA}
+        style={{ width: '100%', padding: '12px', borderRadius: 10, border: 'none', background: highlight ? '#ffffff' : 'linear-gradient(135deg, #1a3fd4, #0ea5e9)', color: highlight ? '#1a3fd4' : '#ffffff', fontSize: 14, fontWeight: 700, cursor: 'pointer', transition: 'all 0.15s', boxShadow: highlight ? 'none' : '0 4px 14px rgba(26,63,212,0.3)', letterSpacing: '0.02em' }}
         onMouseEnter={e => { e.currentTarget.style.opacity = '0.88'; e.currentTarget.style.transform = 'scale(0.98)' }}
         onMouseLeave={e => { e.currentTarget.style.opacity = '1'; e.currentTarget.style.transform = 'none' }}
-      >
-        {ctaLabel}
-      </button>
+      >{ctaLabel}</button>
     </div>
   )
 }
@@ -325,13 +213,161 @@ function StatBadge({ num, label }) {
   )
 }
 
+// ─── Contact Section ──────────────────────────────────────────────────────────
+function ContactSection() {
+  const [form, setForm] = useState({ name: '', email: '', message: '' })
+  const [sent, setSent] = useState(false)
+  const [loading, setLoading] = useState(false)
+  const [error, setError] = useState('')
+
+  const handleSubmit = async () => {
+    setError('')
+    if (!form.name.trim() || !form.email.trim() || !form.message.trim()) {
+      setError('Please fill in all fields.')
+      return
+    }
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(form.email)) {
+      setError('Please enter a valid email address.')
+      return
+    }
+    setLoading(true)
+    try {
+      const res = await fetch(`${WORKER_URL}/api/contact`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ ...form, source: 'Inventory Control Website' }),
+      })
+      const data = await res.json()
+      if (!res.ok) throw new Error(data.error || 'Something went wrong.')
+      setSent(true)
+      setForm({ name: '', email: '', message: '' })
+    } catch (err) {
+      setError(err.message || 'Failed to send. Please try again.')
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  const inputStyle = {
+    width: '100%', borderRadius: 10,
+    border: '1.5px solid #e5e7eb',
+    background: '#f9fafb', color: '#111827',
+    fontSize: 14, padding: '11px 14px',
+    outline: 'none', transition: 'border-color 0.15s, box-shadow 0.15s',
+    boxSizing: 'border-box', fontFamily: "'DM Sans', sans-serif",
+  }
+
+  return (
+    <section id="contact" style={{ background: '#f0f4ff', padding: '5rem 2rem' }}>
+      <div style={{ maxWidth: 1100, margin: '0 auto' }}>
+        <div style={{ textAlign: 'center', marginBottom: '3rem' }}>
+          <p style={{ fontSize: 13, fontWeight: 700, color: '#1a3fd4', textTransform: 'uppercase', letterSpacing: '0.1em', marginBottom: 12 }}>Get in Touch</p>
+          <h2 style={{ fontFamily: "'Syne', sans-serif", fontSize: 'clamp(1.8rem, 3vw, 2.6rem)', fontWeight: 900, color: '#0f1729', margin: '0 0 1rem', letterSpacing: '-0.02em' }}>
+            We'd love to hear from you
+          </h2>
+          <p style={{ fontSize: 16, color: '#6b7280', maxWidth: 440, margin: '0 auto' }}>
+            Questions about pricing, onboarding, or custom integrations? Send us a message.
+          </p>
+        </div>
+
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', gap: '3rem', alignItems: 'start' }}>
+
+          {/* Left: info */}
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '1.75rem' }}>
+            {[
+              { icon: '📧', label: 'Email', value: 'emmanuelablao16@gmail.com' },
+              { icon: '📍', label: 'Location', value: 'Philippines · Remote-Ready' },
+              { icon: '⏱', label: 'Response time', value: 'Usually within 24 hours' },
+            ].map(item => (
+              <div key={item.label} style={{ display: 'flex', gap: '1rem', alignItems: 'flex-start' }}>
+                <div style={{ width: 40, height: 40, borderRadius: 10, background: '#eff3ff', border: '1px solid #c7d7fe', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 18, flexShrink: 0 }}>
+                  {item.icon}
+                </div>
+                <div>
+                  <div style={{ fontSize: 11, fontWeight: 700, color: '#1a3fd4', textTransform: 'uppercase', letterSpacing: '0.1em', marginBottom: 3 }}>{item.label}</div>
+                  <div style={{ fontSize: 14, color: '#374151' }}>{item.value}</div>
+                </div>
+              </div>
+            ))}
+          </div>
+
+          {/* Right: form */}
+          <div style={{ background: '#ffffff', borderRadius: 20, padding: '2rem', border: '1.5px solid #e5e9f5', boxShadow: '0 4px 24px rgba(26,63,212,0.06)' }}>
+            {sent ? (
+              <div style={{ textAlign: 'center', padding: '2rem 0' }}>
+                <div style={{ fontSize: 48, marginBottom: '1rem' }}>✅</div>
+                <h3 style={{ fontFamily: "'Syne', sans-serif", fontSize: '1.5rem', fontWeight: 900, color: '#0f1729', margin: '0 0 0.5rem' }}>Message Sent!</h3>
+                <p style={{ fontSize: 14, color: '#6b7280', margin: '0 0 1.5rem' }}>We'll get back to you within 24 hours.</p>
+                <button onClick={() => setSent(false)}
+                  style={{ background: 'none', border: '1.5px solid #e5e7eb', borderRadius: 8, padding: '8px 20px', fontSize: 13, color: '#6b7280', cursor: 'pointer', fontFamily: "'DM Sans', sans-serif", transition: 'all 0.15s' }}
+                  onMouseEnter={e => { e.currentTarget.style.borderColor = '#1a3fd4'; e.currentTarget.style.color = '#1a3fd4' }}
+                  onMouseLeave={e => { e.currentTarget.style.borderColor = '#e5e7eb'; e.currentTarget.style.color = '#6b7280' }}
+                >Send another</button>
+              </div>
+            ) : (
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
+                  {[
+                    { key: 'name', label: 'Full Name', type: 'text', placeholder: 'Juan dela Cruz' },
+                    { key: 'email', label: 'Email', type: 'email', placeholder: 'juan@company.com' },
+                  ].map(({ key, label, type, placeholder }) => (
+                    <div key={key}>
+                      <label style={{ display: 'block', fontSize: 12, fontWeight: 600, color: '#374151', marginBottom: 6, textTransform: 'uppercase', letterSpacing: '0.05em' }}>{label}</label>
+                      <input type={type} placeholder={placeholder} value={form[key]} onChange={e => setForm({ ...form, [key]: e.target.value })} disabled={loading} style={inputStyle}
+                        onFocus={e => { e.target.style.borderColor = '#1a3fd4'; e.target.style.boxShadow = '0 0 0 3px rgba(26,63,212,0.12)' }}
+                        onBlur={e => { e.target.style.borderColor = '#e5e7eb'; e.target.style.boxShadow = 'none' }}
+                      />
+                    </div>
+                  ))}
+                </div>
+                <div>
+                  <label style={{ display: 'block', fontSize: 12, fontWeight: 600, color: '#374151', marginBottom: 6, textTransform: 'uppercase', letterSpacing: '0.05em' }}>Message</label>
+                  <textarea rows={4} placeholder="Tell us about your business or ask a question..." value={form.message} onChange={e => setForm({ ...form, message: e.target.value })} disabled={loading}
+                    style={{ ...inputStyle, resize: 'none' }}
+                    onFocus={e => { e.target.style.borderColor = '#1a3fd4'; e.target.style.boxShadow = '0 0 0 3px rgba(26,63,212,0.12)' }}
+                    onBlur={e => { e.target.style.borderColor = '#e5e7eb'; e.target.style.boxShadow = 'none' }}
+                  />
+                </div>
+                {error && (
+                  <p style={{ fontSize: 13, color: '#dc2626', margin: 0, background: '#fef2f2', border: '1px solid #fecaca', borderRadius: 8, padding: '10px 14px' }}>⚠ {error}</p>
+                )}
+                <button onClick={handleSubmit} disabled={loading}
+                  style={{ width: '100%', borderRadius: 10, background: loading ? 'rgba(26,63,212,0.5)' : 'linear-gradient(135deg, #1a3fd4, #0ea5e9)', color: '#fff', fontSize: 14, fontWeight: 700, padding: '12px 0', border: 'none', cursor: loading ? 'not-allowed' : 'pointer', opacity: loading ? 0.7 : 1, transition: 'all 0.15s', boxShadow: '0 4px 16px rgba(26,63,212,0.3)', letterSpacing: '0.02em', fontFamily: "'DM Sans', sans-serif" }}
+                  onMouseEnter={e => { if (!loading) { e.currentTarget.style.opacity = '0.9'; e.currentTarget.style.transform = 'translateY(-1px)' } }}
+                  onMouseLeave={e => { e.currentTarget.style.opacity = loading ? '0.7' : '1'; e.currentTarget.style.transform = 'none' }}
+                >{loading ? 'Sending…' : 'Send Message →'}</button>
+              </div>
+            )}
+          </div>
+        </div>
+      </div>
+    </section>
+  )
+}
+
+// ─── FAQ Item ─────────────────────────────────────────────────────────────────
+function FAQItem({ q, a }) {
+  const [open, setOpen] = useState(false)
+  return (
+    <div style={{ borderBottom: '1px solid #e8edf8' }}>
+      <button onClick={() => setOpen(!open)}
+        style={{ width: '100%', background: 'none', border: 'none', padding: '1.25rem 0', display: 'flex', justifyContent: 'space-between', alignItems: 'center', cursor: 'pointer', textAlign: 'left', fontFamily: "'DM Sans',sans-serif" }}
+      >
+        <span style={{ fontSize: 15, fontWeight: 600, color: '#0f1729' }}>{q}</span>
+        <span style={{ fontSize: 20, color: '#9ca3af', transition: 'transform 0.15s', transform: open ? 'rotate(45deg)' : 'none', flexShrink: 0, marginLeft: 16 }}>+</span>
+      </button>
+      {open && (
+        <div style={{ paddingBottom: '1.25rem', fontSize: 14, color: '#4b5563', lineHeight: 1.7, animation: 'lp_fadeIn 0.15s ease' }}>{a}</div>
+      )}
+    </div>
+  )
+}
+
 // ─── Main Landing Page ────────────────────────────────────────────────────────
 export default function LandingPage() {
   const [showLogin, setShowLogin] = useState(false)
   const [billingAnnual, setBillingAnnual] = useState(false)
 
-  // Fix: override the app-level overflow:hidden & height:100% on body/#root
-  // so this page can scroll normally
   useEffect(() => {
     const prevBodyOverflow = document.body.style.overflow
     const prevBodyHeight = document.body.style.height
@@ -355,7 +391,6 @@ export default function LandingPage() {
     }
   }, [])
 
-  // Lock body scroll when modal is open
   useEffect(() => {
     if (showLogin) {
       document.body.style.overflow = 'hidden'
@@ -391,6 +426,7 @@ export default function LandingPage() {
           .lp-section { padding: 4rem 1.25rem !important; }
           .lp-hero { padding: 6rem 1.25rem 4rem !important; }
           .lp-smartscan-row { flex-direction: column !important; }
+          .lp-contact-grid { grid-template-columns: 1fr !important; }
         }
       `}</style>
 
@@ -399,36 +435,23 @@ export default function LandingPage() {
         {/* ── Navbar ── */}
         <nav style={{
           position: 'fixed', top: 0, left: 0, right: 0, zIndex: 100,
-          background: 'rgba(245,247,255,0.88)',
-          backdropFilter: 'blur(16px)',
+          background: 'rgba(245,247,255,0.88)', backdropFilter: 'blur(16px)',
           borderBottom: '1px solid rgba(26,63,212,0.08)',
-          padding: '0 2rem',
-          display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-          height: 64,
+          padding: '0 2rem', display: 'flex', alignItems: 'center', justifyContent: 'space-between', height: 64,
         }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
             <img src={logo} alt="StockMaster PH" style={{ height: 100, width: 'auto', objectFit: 'contain' }} />
           </div>
-
           <div className="lp-nav-links" style={{ display: 'flex', gap: '2rem', alignItems: 'center' }}>
             <a className="lp-nav-link" href="#features">Features</a>
             <a className="lp-nav-link" href="#pricing">Pricing</a>
             <a className="lp-nav-link" href="#smartscan">SmartScan AI</a>
             <a className="lp-nav-link" href="#faq">FAQ</a>
+            <a className="lp-nav-link" href="#contact">Contact</a>
           </div>
-
           <div style={{ display: 'flex', gap: 10, alignItems: 'center' }}>
-            <button onClick={() => setShowLogin(true)} style={{
-              background: 'none', border: 'none', fontSize: 14, fontWeight: 600,
-              color: '#374151', cursor: 'pointer', padding: '8px 14px', fontFamily: "'DM Sans',sans-serif",
-            }}>Sign in</button>
-            <button onClick={() => setShowLogin(true)} style={{
-              background: 'linear-gradient(135deg, #1a3fd4, #0ea5e9)',
-              color: '#fff', border: 'none', borderRadius: 9,
-              fontSize: 14, fontWeight: 700, padding: '9px 20px', cursor: 'pointer',
-              boxShadow: '0 4px 14px rgba(26,63,212,0.3)',
-              transition: 'opacity 0.15s', fontFamily: "'DM Sans',sans-serif",
-            }}
+            <button onClick={() => setShowLogin(true)} style={{ background: 'none', border: 'none', fontSize: 14, fontWeight: 600, color: '#374151', cursor: 'pointer', padding: '8px 14px', fontFamily: "'DM Sans',sans-serif" }}>Sign in</button>
+            <button onClick={() => setShowLogin(true)} style={{ background: 'linear-gradient(135deg, #1a3fd4, #0ea5e9)', color: '#fff', border: 'none', borderRadius: 9, fontSize: 14, fontWeight: 700, padding: '9px 20px', cursor: 'pointer', boxShadow: '0 4px 14px rgba(26,63,212,0.3)', transition: 'opacity 0.15s', fontFamily: "'DM Sans',sans-serif" }}
               onMouseEnter={e => e.currentTarget.style.opacity = '0.88'}
               onMouseLeave={e => e.currentTarget.style.opacity = '1'}
             >Start Free Trial</button>
@@ -436,98 +459,38 @@ export default function LandingPage() {
         </nav>
 
         {/* ── Hero ── */}
-        <section className="lp-hero" style={{
-          padding: '8rem 2rem 5rem',
-          maxWidth: 1160, margin: '0 auto',
-          display: 'flex', flexDirection: 'column', alignItems: 'center',
-          textAlign: 'center', position: 'relative',
-        }}>
-          <div style={{
-            position: 'absolute', top: 80, left: '10%',
-            width: 500, height: 500, borderRadius: '50%',
-            background: 'radial-gradient(circle, rgba(26,63,212,0.08) 0%, transparent 70%)',
-            animation: 'lp_floatBg 8s ease-in-out infinite',
-            pointerEvents: 'none',
-          }} />
-          <div style={{
-            position: 'absolute', top: 120, right: '5%',
-            width: 300, height: 300, borderRadius: '50%',
-            background: 'radial-gradient(circle, rgba(14,165,233,0.1) 0%, transparent 70%)',
-            animation: 'lp_floatBg 10s ease-in-out infinite reverse',
-            pointerEvents: 'none',
-          }} />
+        <section className="lp-hero" style={{ padding: '8rem 2rem 5rem', maxWidth: 1160, margin: '0 auto', display: 'flex', flexDirection: 'column', alignItems: 'center', textAlign: 'center', position: 'relative' }}>
+          <div style={{ position: 'absolute', top: 80, left: '10%', width: 500, height: 500, borderRadius: '50%', background: 'radial-gradient(circle, rgba(26,63,212,0.08) 0%, transparent 70%)', animation: 'lp_floatBg 8s ease-in-out infinite', pointerEvents: 'none' }} />
+          <div style={{ position: 'absolute', top: 120, right: '5%', width: 300, height: 300, borderRadius: '50%', background: 'radial-gradient(circle, rgba(14,165,233,0.1) 0%, transparent 70%)', animation: 'lp_floatBg 10s ease-in-out infinite reverse', pointerEvents: 'none' }} />
 
-          <div style={{
-            display: 'inline-flex', alignItems: 'center', gap: 8,
-            background: '#eff3ff', border: '1px solid #c7d7fe',
-            borderRadius: 20, padding: '6px 16px', marginBottom: '1.5rem',
-            position: 'relative', zIndex: 1,
-          }}>
+          <div style={{ display: 'inline-flex', alignItems: 'center', gap: 8, background: '#eff3ff', border: '1px solid #c7d7fe', borderRadius: 20, padding: '6px 16px', marginBottom: '1.5rem', position: 'relative', zIndex: 1 }}>
             <span style={{ animation: 'lp_pulse 2s infinite', fontSize: 10 }}>🟢</span>
             <span style={{ fontSize: 13, fontWeight: 600, color: '#1a3fd4' }}>Built for Philippine businesses</span>
           </div>
 
-          <h1 className="lp-hero-title" style={{
-            fontFamily: "'Syne', sans-serif",
-            fontSize: 'clamp(2.4rem, 5vw, 4rem)',
-            fontWeight: 900, color: '#0f1729',
-            lineHeight: 1.08, maxWidth: 800,
-            margin: '0 0 1.5rem',
-            letterSpacing: '-0.02em',
-            position: 'relative', zIndex: 1,
-          }}>
+          <h1 className="lp-hero-title" style={{ fontFamily: "'Syne', sans-serif", fontSize: 'clamp(2.4rem, 5vw, 4rem)', fontWeight: 900, color: '#0f1729', lineHeight: 1.08, maxWidth: 800, margin: '0 0 1.5rem', letterSpacing: '-0.02em', position: 'relative', zIndex: 1 }}>
             Inventory control that<br />
-            <span style={{
-              background: 'linear-gradient(135deg, #1a3fd4, #0ea5e9)',
-              WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent',
-            }}>actually works for you</span>
+            <span style={{ background: 'linear-gradient(135deg, #1a3fd4, #0ea5e9)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' }}>actually works for you</span>
           </h1>
 
-          <p style={{
-            fontSize: 18, color: '#4b5563', lineHeight: 1.7,
-            maxWidth: 560, margin: '0 0 2.5rem',
-            position: 'relative', zIndex: 1,
-          }}>
+          <p style={{ fontSize: 18, color: '#4b5563', lineHeight: 1.7, maxWidth: 560, margin: '0 0 2.5rem', position: 'relative', zIndex: 1 }}>
             Real-time stock tracking, smart reorder alerts, purchase order management, and team collaboration — all in one clean dashboard.
           </p>
 
           <div className="lp-hero-btns" style={{ display: 'flex', gap: 14, flexWrap: 'wrap', justifyContent: 'center', position: 'relative', zIndex: 1 }}>
-            <button onClick={() => setShowLogin(true)} style={{
-              background: 'linear-gradient(135deg, #1a3fd4, #0ea5e9)',
-              color: '#fff', border: 'none', borderRadius: 12,
-              fontSize: 16, fontWeight: 700, padding: '14px 32px', cursor: 'pointer',
-              boxShadow: '0 6px 24px rgba(26,63,212,0.35)',
-              transition: 'all 0.15s', fontFamily: "'DM Sans',sans-serif",
-            }}
+            <button onClick={() => setShowLogin(true)} style={{ background: 'linear-gradient(135deg, #1a3fd4, #0ea5e9)', color: '#fff', border: 'none', borderRadius: 12, fontSize: 16, fontWeight: 700, padding: '14px 32px', cursor: 'pointer', boxShadow: '0 6px 24px rgba(26,63,212,0.35)', transition: 'all 0.15s', fontFamily: "'DM Sans',sans-serif" }}
               onMouseEnter={e => { e.currentTarget.style.transform = 'translateY(-2px)'; e.currentTarget.style.boxShadow = '0 10px 32px rgba(26,63,212,0.4)' }}
               onMouseLeave={e => { e.currentTarget.style.transform = 'none'; e.currentTarget.style.boxShadow = '0 6px 24px rgba(26,63,212,0.35)' }}
-            >
-              Start Free 14-Day Trial →
-            </button>
-            <button onClick={() => setShowLogin(true)} style={{
-              background: '#ffffff', color: '#0f1729',
-              border: '1.5px solid #e5e9f5', borderRadius: 12,
-              fontSize: 16, fontWeight: 600, padding: '14px 28px', cursor: 'pointer',
-              transition: 'all 0.15s',
-              boxShadow: '0 2px 8px rgba(0,0,0,0.06)', fontFamily: "'DM Sans',sans-serif",
-            }}
+            >Start Free 14-Day Trial →</button>
+            <button onClick={() => setShowLogin(true)} style={{ background: '#ffffff', color: '#0f1729', border: '1.5px solid #e5e9f5', borderRadius: 12, fontSize: 16, fontWeight: 600, padding: '14px 28px', cursor: 'pointer', transition: 'all 0.15s', boxShadow: '0 2px 8px rgba(0,0,0,0.06)', fontFamily: "'DM Sans',sans-serif" }}
               onMouseEnter={e => { e.currentTarget.style.borderColor = '#1a3fd4'; e.currentTarget.style.color = '#1a3fd4' }}
               onMouseLeave={e => { e.currentTarget.style.borderColor = '#e5e9f5'; e.currentTarget.style.color = '#0f1729' }}
-            >
-              View Demo
-            </button>
+            >View Demo</button>
           </div>
 
           <p style={{ fontSize: 13, color: '#9ca3af', marginTop: '1rem', position: 'relative', zIndex: 1 }}>No credit card required · Cancel anytime</p>
 
-          {/* Dashboard Preview */}
-          <div style={{
-            marginTop: '3.5rem', width: '100%', maxWidth: 860,
-            background: '#0f1729', borderRadius: 20, padding: '1.25rem',
-            boxShadow: '0 32px 80px rgba(15,23,41,0.3)',
-            border: '1px solid rgba(255,255,255,0.06)',
-            position: 'relative', zIndex: 1,
-          }}>
+          <div style={{ marginTop: '3.5rem', width: '100%', maxWidth: 860, background: '#0f1729', borderRadius: 20, padding: '1.25rem', boxShadow: '0 32px 80px rgba(15,23,41,0.3)', border: '1px solid rgba(255,255,255,0.06)', position: 'relative', zIndex: 1 }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: '1rem' }}>
               <div style={{ width: 10, height: 10, borderRadius: '50%', background: '#ff5f57' }} />
               <div style={{ width: 10, height: 10, borderRadius: '50%', background: '#ffbd2e' }} />
@@ -543,11 +506,7 @@ export default function LandingPage() {
                 { label: 'Pending POs', val: '4', trend: '₱48,200', color: '#10b981' },
                 { label: "Today's Moves", val: '23', trend: '+8 inbound', color: '#8b5cf6' },
               ].map(s => (
-                <div key={s.label} style={{
-                  flex: '1 1 140px',
-                  background: 'rgba(255,255,255,0.04)', borderRadius: 10, padding: '1rem',
-                  border: '1px solid rgba(255,255,255,0.06)',
-                }}>
+                <div key={s.label} style={{ flex: '1 1 140px', background: 'rgba(255,255,255,0.04)', borderRadius: 10, padding: '1rem', border: '1px solid rgba(255,255,255,0.06)' }}>
                   <p style={{ fontSize: 11, color: '#6b7280', margin: '0 0 6px', textTransform: 'uppercase', letterSpacing: '0.06em' }}>{s.label}</p>
                   <p style={{ fontSize: 26, fontWeight: 800, color: '#f1f5f9', margin: '0 0 4px', fontFamily: "'Syne', sans-serif" }}>{s.val}</p>
                   <p style={{ fontSize: 11, color: s.color, margin: 0 }}>{s.trend}</p>
@@ -574,9 +533,7 @@ export default function LandingPage() {
         <section id="features" className="lp-section" style={{ padding: '5rem 2rem', maxWidth: 1100, margin: '0 auto' }}>
           <div style={{ textAlign: 'center', marginBottom: '3rem' }}>
             <p style={{ fontSize: 13, fontWeight: 700, color: '#1a3fd4', textTransform: 'uppercase', letterSpacing: '0.1em', marginBottom: 12 }}>Everything you need</p>
-            <h2 style={{ fontFamily: "'Syne', sans-serif", fontSize: 'clamp(1.8rem, 3vw, 2.6rem)', fontWeight: 900, color: '#0f1729', margin: '0 0 1rem', letterSpacing: '-0.02em' }}>
-              Powerful tools, zero complexity
-            </h2>
+            <h2 style={{ fontFamily: "'Syne', sans-serif", fontSize: 'clamp(1.8rem, 3vw, 2.6rem)', fontWeight: 900, color: '#0f1729', margin: '0 0 1rem', letterSpacing: '-0.02em' }}>Powerful tools, zero complexity</h2>
             <p style={{ fontSize: 16, color: '#6b7280', maxWidth: 480, margin: '0 auto' }}>Everything your warehouse, retail store, or distribution business needs in one place.</p>
           </div>
           <div className="lp-features-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 20 }}>
@@ -590,31 +547,15 @@ export default function LandingPage() {
         </section>
 
         {/* ── SmartScan AI ── */}
-        <section id="smartscan" style={{
-          background: 'linear-gradient(135deg, #0f1729 0%, #1a2a5e 100%)',
-          padding: '5rem 2rem', position: 'relative', overflow: 'hidden',
-        }}>
-          <div style={{
-            position: 'absolute', top: -100, right: -100,
-            width: 500, height: 500, borderRadius: '50%',
-            background: 'radial-gradient(circle, rgba(14,165,233,0.12) 0%, transparent 65%)',
-            pointerEvents: 'none',
-          }} />
+        <section id="smartscan" style={{ background: 'linear-gradient(135deg, #0f1729 0%, #1a2a5e 100%)', padding: '5rem 2rem', position: 'relative', overflow: 'hidden' }}>
+          <div style={{ position: 'absolute', top: -100, right: -100, width: 500, height: 500, borderRadius: '50%', background: 'radial-gradient(circle, rgba(14,165,233,0.12) 0%, transparent 65%)', pointerEvents: 'none' }} />
           <div className="lp-smartscan-row" style={{ maxWidth: 1100, margin: '0 auto', display: 'flex', flexWrap: 'wrap', gap: '3rem', alignItems: 'center', justifyContent: 'center' }}>
             <div style={{ flex: '1 1 380px', maxWidth: 480 }}>
-              <div style={{
-                display: 'inline-flex', alignItems: 'center', gap: 8,
-                background: 'rgba(14,165,233,0.15)', border: '1px solid rgba(14,165,233,0.3)',
-                borderRadius: 20, padding: '5px 14px', marginBottom: '1.5rem',
-              }}>
+              <div style={{ display: 'inline-flex', alignItems: 'center', gap: 8, background: 'rgba(14,165,233,0.15)', border: '1px solid rgba(14,165,233,0.3)', borderRadius: 20, padding: '5px 14px', marginBottom: '1.5rem' }}>
                 <span style={{ fontSize: 14 }}>✨</span>
                 <span style={{ fontSize: 12, fontWeight: 700, color: '#38bdf8', letterSpacing: '0.08em', textTransform: 'uppercase' }}>New Feature</span>
               </div>
-              <h2 style={{
-                fontFamily: "'Syne', sans-serif",
-                fontSize: 'clamp(1.8rem, 3vw, 2.6rem)', fontWeight: 900,
-                color: '#f1f5f9', lineHeight: 1.1, margin: '0 0 1.25rem', letterSpacing: '-0.02em',
-              }}>
+              <h2 style={{ fontFamily: "'Syne', sans-serif", fontSize: 'clamp(1.8rem, 3vw, 2.6rem)', fontWeight: 900, color: '#f1f5f9', lineHeight: 1.1, margin: '0 0 1.25rem', letterSpacing: '-0.02em' }}>
                 SmartScan AI<br /><span style={{ color: '#38bdf8' }}>Barcode Intelligence</span>
               </h2>
               <p style={{ fontSize: 15, color: '#94a3b8', lineHeight: 1.7, marginBottom: '1.75rem' }}>
@@ -628,20 +569,10 @@ export default function LandingPage() {
                   </li>
                 ))}
               </ul>
-              <button onClick={() => setShowLogin(true)} style={{
-                background: 'linear-gradient(135deg, #0ea5e9, #38bdf8)', color: '#0f1729',
-                border: 'none', borderRadius: 10, fontSize: 14, fontWeight: 800, padding: '12px 28px',
-                cursor: 'pointer', boxShadow: '0 4px 20px rgba(14,165,233,0.4)', transition: 'all 0.15s',
-                fontFamily: "'DM Sans',sans-serif",
-              }}>Try SmartScan Free →</button>
+              <button onClick={() => setShowLogin(true)} style={{ background: 'linear-gradient(135deg, #0ea5e9, #38bdf8)', color: '#0f1729', border: 'none', borderRadius: 10, fontSize: 14, fontWeight: 800, padding: '12px 28px', cursor: 'pointer', boxShadow: '0 4px 20px rgba(14,165,233,0.4)', transition: 'all 0.15s', fontFamily: "'DM Sans',sans-serif" }}>Try SmartScan Free →</button>
             </div>
-
             <div style={{ flex: '1 1 300px', maxWidth: 360 }}>
-              <div style={{
-                background: '#1a2237', borderRadius: 20, padding: '1.5rem',
-                border: '1px solid rgba(255,255,255,0.07)',
-                boxShadow: '0 24px 60px rgba(0,0,0,0.4)',
-              }}>
+              <div style={{ background: '#1a2237', borderRadius: 20, padding: '1.5rem', border: '1px solid rgba(255,255,255,0.07)', boxShadow: '0 24px 60px rgba(0,0,0,0.4)' }}>
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.25rem' }}>
                   <span style={{ fontSize: 14, fontWeight: 700, color: '#f1f5f9' }}>SmartScan AI</span>
                   <span style={{ fontSize: 11, background: 'rgba(14,165,233,0.2)', color: '#38bdf8', padding: '3px 10px', borderRadius: 20, fontWeight: 600, border: '1px solid rgba(14,165,233,0.3)' }}>● LIVE</span>
@@ -675,54 +606,29 @@ export default function LandingPage() {
         <section id="pricing" className="lp-section" style={{ padding: '5rem 2rem', maxWidth: 1100, margin: '0 auto' }}>
           <div style={{ textAlign: 'center', marginBottom: '2.5rem' }}>
             <p style={{ fontSize: 13, fontWeight: 700, color: '#1a3fd4', textTransform: 'uppercase', letterSpacing: '0.1em', marginBottom: 12 }}>Pricing</p>
-            <h2 style={{ fontFamily: "'Syne', sans-serif", fontSize: 'clamp(1.8rem, 3vw, 2.6rem)', fontWeight: 900, color: '#0f1729', margin: '0 0 1rem', letterSpacing: '-0.02em' }}>
-              Simple, transparent pricing
-            </h2>
+            <h2 style={{ fontFamily: "'Syne', sans-serif", fontSize: 'clamp(1.8rem, 3vw, 2.6rem)', fontWeight: 900, color: '#0f1729', margin: '0 0 1rem', letterSpacing: '-0.02em' }}>Simple, transparent pricing</h2>
             <p style={{ fontSize: 16, color: '#6b7280', maxWidth: 440, margin: '0 auto 1.75rem' }}>All plans include a 14-day free trial. No credit card required.</p>
             <div style={{ display: 'inline-flex', background: '#f1f5f9', borderRadius: 30, padding: 4 }}>
-              <button onClick={() => setBillingAnnual(false)} style={{
-                padding: '8px 20px', borderRadius: 26, border: 'none', cursor: 'pointer',
-                background: !billingAnnual ? '#ffffff' : 'transparent',
-                color: !billingAnnual ? '#0f1729' : '#6b7280',
-                fontWeight: 600, fontSize: 13, boxShadow: !billingAnnual ? '0 1px 4px rgba(0,0,0,0.1)' : 'none',
-                transition: 'all 0.2s', fontFamily: "'DM Sans',sans-serif",
-              }}>Monthly</button>
-              <button onClick={() => setBillingAnnual(true)} style={{
-                padding: '8px 20px', borderRadius: 26, border: 'none', cursor: 'pointer',
-                background: billingAnnual ? '#ffffff' : 'transparent',
-                color: billingAnnual ? '#0f1729' : '#6b7280',
-                fontWeight: 600, fontSize: 13, boxShadow: billingAnnual ? '0 1px 4px rgba(0,0,0,0.1)' : 'none',
-                transition: 'all 0.2s', display: 'flex', alignItems: 'center', gap: 6, fontFamily: "'DM Sans',sans-serif",
-              }}>
+              <button onClick={() => setBillingAnnual(false)} style={{ padding: '8px 20px', borderRadius: 26, border: 'none', cursor: 'pointer', background: !billingAnnual ? '#ffffff' : 'transparent', color: !billingAnnual ? '#0f1729' : '#6b7280', fontWeight: 600, fontSize: 13, boxShadow: !billingAnnual ? '0 1px 4px rgba(0,0,0,0.1)' : 'none', transition: 'all 0.2s', fontFamily: "'DM Sans',sans-serif" }}>Monthly</button>
+              <button onClick={() => setBillingAnnual(true)} style={{ padding: '8px 20px', borderRadius: 26, border: 'none', cursor: 'pointer', background: billingAnnual ? '#ffffff' : 'transparent', color: billingAnnual ? '#0f1729' : '#6b7280', fontWeight: 600, fontSize: 13, boxShadow: billingAnnual ? '0 1px 4px rgba(0,0,0,0.1)' : 'none', transition: 'all 0.2s', display: 'flex', alignItems: 'center', gap: 6, fontFamily: "'DM Sans',sans-serif" }}>
                 Annual
                 {billingAnnual && <span style={{ background: '#dcfce7', color: '#16a34a', fontSize: 10, fontWeight: 700, padding: '2px 6px', borderRadius: 10 }}>–17%</span>}
               </button>
             </div>
           </div>
-
           <div className="lp-pricing-row" style={{ display: 'flex', gap: 24, justifyContent: 'center', flexWrap: 'wrap', alignItems: 'stretch' }}>
-            <PricingCard plan="Starter" price={prices.starter} period="/mo"
-              features={['Up to 3 users', 'Up to 500 SKUs', 'Basic dashboard & alerts', 'Stock movement logs', 'CSV export', 'Email support']}
-              onCTA={() => setShowLogin(true)} ctaLabel="Start Free Trial" />
-            <PricingCard plan="Growth" price={prices.growth} period="/mo" highlight
-              features={['Up to 15 users', 'Unlimited SKUs', 'SmartScan AI (500 scans/mo)', 'Purchase order management', 'Advanced reports & analytics', 'Multi-warehouse support', 'Priority support']}
-              onCTA={() => setShowLogin(true)} ctaLabel="Get Growth Plan" />
-            <PricingCard plan="Enterprise" price={prices.enterprise} period="/mo"
-              features={['Unlimited users', 'Unlimited SKUs + warehouses', 'SmartScan AI (unlimited)', 'Custom integrations & API access', 'Dedicated account manager', 'SLA guarantee', 'On-site training']}
-              onCTA={() => setShowLogin(true)} ctaLabel="Contact Sales" />
+            <PricingCard plan="Starter" price={prices.starter} period="/mo" features={['Up to 3 users', 'Up to 500 SKUs', 'Basic dashboard & alerts', 'Stock movement logs', 'CSV export', 'Email support']} onCTA={() => setShowLogin(true)} ctaLabel="Start Free Trial" />
+            <PricingCard plan="Growth" price={prices.growth} period="/mo" highlight features={['Up to 15 users', 'Unlimited SKUs', 'SmartScan AI (500 scans/mo)', 'Purchase order management', 'Advanced reports & analytics', 'Multi-warehouse support', 'Priority support']} onCTA={() => setShowLogin(true)} ctaLabel="Get Growth Plan" />
+            <PricingCard plan="Enterprise" price={prices.enterprise} period="/mo" features={['Unlimited users', 'Unlimited SKUs + warehouses', 'SmartScan AI (unlimited)', 'Custom integrations & API access', 'Dedicated account manager', 'SLA guarantee', 'On-site training']} onCTA={() => setShowLogin(true)} ctaLabel="Contact Sales" />
           </div>
-          <p style={{ textAlign: 'center', fontSize: 13, color: '#9ca3af', marginTop: '2rem' }}>
-            Prices in Philippine Peso (₱). VAT may apply. Annual plans billed once yearly.
-          </p>
+          <p style={{ textAlign: 'center', fontSize: 13, color: '#9ca3af', marginTop: '2rem' }}>Prices in Philippine Peso (₱). VAT may apply. Annual plans billed once yearly.</p>
         </section>
 
         {/* ── Testimonials ── */}
         <section style={{ background: '#f0f4ff', padding: '5rem 2rem' }}>
           <div style={{ maxWidth: 1100, margin: '0 auto' }}>
             <div style={{ textAlign: 'center', marginBottom: '2.5rem' }}>
-              <h2 style={{ fontFamily: "'Syne', sans-serif", fontSize: 'clamp(1.6rem, 3vw, 2.2rem)', fontWeight: 900, color: '#0f1729', margin: 0 }}>
-                Trusted by businesses across the Philippines
-              </h2>
+              <h2 style={{ fontFamily: "'Syne', sans-serif", fontSize: 'clamp(1.6rem, 3vw, 2.2rem)', fontWeight: 900, color: '#0f1729', margin: 0 }}>Trusted by businesses across the Philippines</h2>
             </div>
             <div style={{ display: 'flex', gap: 20, flexWrap: 'wrap', justifyContent: 'center' }}>
               {[
@@ -760,15 +666,14 @@ export default function LandingPage() {
           ].map((faq, i) => <FAQItem key={i} q={faq.q} a={faq.a} />)}
         </section>
 
+        {/* ── Contact ── */}
+        <ContactSection />
+
         {/* ── CTA Banner ── */}
         <section style={{ background: 'linear-gradient(135deg, #1a3fd4, #0c2aaa)', padding: '4rem 2rem', textAlign: 'center' }}>
           <h2 style={{ fontFamily: "'Syne', sans-serif", fontSize: 'clamp(1.8rem, 3vw, 2.8rem)', fontWeight: 900, color: '#ffffff', margin: '0 0 1rem' }}>Start managing smarter today</h2>
           <p style={{ fontSize: 16, color: '#93c5fd', marginBottom: '2rem' }}>Join 2,400+ Philippine businesses already on StockMaster PH.</p>
-          <button onClick={() => setShowLogin(true)} style={{
-            background: '#ffffff', color: '#1a3fd4', border: 'none', borderRadius: 12,
-            fontSize: 16, fontWeight: 800, padding: '14px 36px', cursor: 'pointer',
-            boxShadow: '0 6px 24px rgba(0,0,0,0.2)', transition: 'all 0.15s', fontFamily: "'DM Sans',sans-serif",
-          }}
+          <button onClick={() => setShowLogin(true)} style={{ background: '#ffffff', color: '#1a3fd4', border: 'none', borderRadius: 12, fontSize: 16, fontWeight: 800, padding: '14px 36px', cursor: 'pointer', boxShadow: '0 6px 24px rgba(0,0,0,0.2)', transition: 'all 0.15s', fontFamily: "'DM Sans',sans-serif" }}
             onMouseEnter={e => { e.currentTarget.style.transform = 'translateY(-2px)'; e.currentTarget.style.boxShadow = '0 10px 32px rgba(0,0,0,0.25)' }}
             onMouseLeave={e => { e.currentTarget.style.transform = 'none'; e.currentTarget.style.boxShadow = '0 6px 24px rgba(0,0,0,0.2)' }}
           >Get Started Free →</button>
@@ -801,26 +706,5 @@ export default function LandingPage() {
 
       {showLogin && <LoginModal onClose={() => setShowLogin(false)} />}
     </>
-  )
-}
-
-// Separate component so useState works per-item
-function FAQItem({ q, a }) {
-  const [open, setOpen] = useState(false)
-  return (
-    <div style={{ borderBottom: '1px solid #e8edf8' }}>
-      <button
-        onClick={() => setOpen(!open)}
-        style={{ width: '100%', background: 'none', border: 'none', padding: '1.25rem 0', display: 'flex', justifyContent: 'space-between', alignItems: 'center', cursor: 'pointer', textAlign: 'left', fontFamily: "'DM Sans',sans-serif" }}
-      >
-        <span style={{ fontSize: 15, fontWeight: 600, color: '#0f1729' }}>{q}</span>
-        <span style={{ fontSize: 20, color: '#9ca3af', transition: 'transform 0.15s', transform: open ? 'rotate(45deg)' : 'none', flexShrink: 0, marginLeft: 16 }}>+</span>
-      </button>
-      {open && (
-        <div style={{ paddingBottom: '1.25rem', fontSize: 14, color: '#4b5563', lineHeight: 1.7, animation: 'lp_fadeIn 0.15s ease' }}>
-          {a}
-        </div>
-      )}
-    </div>
   )
 }
